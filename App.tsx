@@ -1,8 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { ImageUploader } from './components/ImageUploader';
+import { CameraCapture } from './components/CameraCapture';
 import { ResultViewer } from './components/ResultViewer';
 import { ColorSelector } from './components/ColorSelector';
+import { AdBanner } from './components/AdBanner';
 import { generateHairstyle } from './services/geminiService';
 import { AppStep, Gender, HairStyle, HairColor } from './types';
 import { hairstyles } from './data/hairstyles';
@@ -10,6 +12,7 @@ import { hairColors } from './data/hairColors';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>(AppStep.HOME);
+  const [showCamera, setShowCamera] = useState(false);
   const [userImage, setUserImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<HairStyle | null>(null);
   const [styleImage, setStyleImage] = useState<string | null>(null);
@@ -88,6 +91,15 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      {showCamera && (
+        <CameraCapture
+          onCapture={(base64) => {
+            setUserImage(base64);
+            setShowCamera(false);
+          }}
+          onClose={() => setShowCamera(false)}
+        />
+      )}
       <Header />
 
       <main className="flex-1 max-w-lg w-full mx-auto p-4 pb-28 flex flex-col">
@@ -101,6 +113,7 @@ const App: React.FC = () => {
                 description="얼굴이 잘 보이는 정면 사진"
                 imageSrc={userImage}
                 onImageSelected={setUserImage}
+                onCameraClick={() => setShowCamera(true)}
                 isActive={!userImage}
               />
             </div>
@@ -170,12 +183,20 @@ const App: React.FC = () => {
               </div>
             </div>
 
+            {/* Ad Banner */}
+            <AdBanner />
+
             {/* Step 3: Hair Color Selection */}
             <div className="mb-5">
-              <p className="text-xs font-bold text-gray-700 mb-3 ml-1 uppercase tracking-wider">
-                Step 3. 염색 컬러 선택
-                <span className="ml-2 text-[10px] font-normal text-gray-400 normal-case">(선택사항)</span>
-              </p>
+              <div className="flex items-center gap-2 mb-3 ml-1">
+                <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  Step 3. 염색 컬러 선택
+                </p>
+                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                  <span className="text-[10px]">C</span>-클리어
+                </span>
+                <span className="text-[10px] font-normal text-gray-400 normal-case">(선택사항)</span>
+              </div>
               <ColorSelector
                 selectedColor={selectedColor}
                 onColorSelected={setSelectedColor}
@@ -229,6 +250,14 @@ const App: React.FC = () => {
             <div className="text-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">새로운 스타일</h2>
               <p className="text-xs text-gray-500">슬라이드하여 Before & After 비교</p>
+              {selectedColor && selectedColor.id !== 'natural' && (
+                <div className="flex items-center justify-center gap-1.5 mt-2">
+                  <span className="inline-flex items-center gap-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+                    C-클리어
+                  </span>
+                  <span className="text-xs text-gray-500">{selectedColor.nameKo} 적용</span>
+                </div>
+              )}
             </div>
             <ResultViewer
               originalImage={userImage}
@@ -236,6 +265,10 @@ const App: React.FC = () => {
               onSave={handleSave}
               onReset={handleReset}
             />
+            {/* Ad Banner on result page */}
+            <div className="mt-2">
+              <AdBanner />
+            </div>
           </div>
         )}
       </main>
