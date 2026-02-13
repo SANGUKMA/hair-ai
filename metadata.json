@@ -1,0 +1,7 @@
+{
+  "name": "HairFit AI",
+  "description": "Visualize your new hairstyle instantly using AI. Upload your photo and a reference style to see the magic.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
