@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f0fdf4"/><stop offset="100%" stop-color="#bbf7d0"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b2314"/><stop offset="100%" stop-color="#1a0f0a"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fddcb5"/><stop offset="100%" stop-color="#f5c69a"/></linearGradient>
+  </defs>
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect x="125" y="265" width="50" height="60" rx="10" fill="url(#skin)"/>
+  <!-- Elizabeth perm - big elegant curls -->
+  <!-- Back volume -->
+  <ellipse cx="150" cy="200" rx="110" ry="110" fill="url(#hair)" opacity="0.6"/>
+  <!-- Face -->
+  <ellipse cx="150" cy="200" rx="58" ry="72" fill="url(#skin)"/>
+  <!-- Hair top - voluminous -->
+  <path d="M72 170 Q78 80 150 70 Q222 80 228 170 Q218 120 195 108 Q170 95 150 100 Q130 95 105 108 Q82 120 72 170Z" fill="url(#hair)"/>
+  <!-- Big elegant curls - left -->
+  <path d="M80 165 Q60 185 65 210 Q55 225 62 250 Q55 270 65 290 Q58 310 70 325 Q80 330 75 310 Q82 290 72 270 Q80 250 70 235 Q78 215 68 200 Q75 185 82 170Z" fill="url(#hair)" opacity="0.9"/>
+  <!-- Big elegant curls - right -->
+  <path d="M220 165 Q240 185 235 210 Q245 225 238 250 Q245 270 235 290 Q242 310 230 325 Q220 330 225 310 Q218 290 228 270 Q220 250 230 235 Q222 215 232 200 Q225 185 218 170Z" fill="url(#hair)" opacity="0.9"/>
+  <!-- Center curls framing face -->
+  <path d="M92 160 Q85 180 90 200 Q83 215 88 235" stroke="url(#hair)" stroke-width="8" fill="none" opacity="0.7"/>
+  <path d="M208 160 Q215 180 210 200 Q217 215 212 235" stroke="url(#hair)" stroke-width="8" fill="none" opacity="0.7"/>
+  <!-- Eyes -->
+  <ellipse cx="130" cy="200" rx="6" ry="4" fill="#2c1810"/>
+  <ellipse cx="170" cy="200" rx="6" ry="4" fill="#2c1810"/>
+  <path d="M148 215 Q150 222 152 215" stroke="#d4a574" stroke-width="1.5" fill="none"/>
+  <path d="M140 234 Q150 242 160 234" stroke="#e88b8b" stroke-width="2" fill="#e88b8b" opacity="0.6"/>
+  <path d="M120 188 Q130 183 140 187" stroke="#2c1810" stroke-width="2" fill="none"/>
+  <path d="M160 187 Q170 183 180 188" stroke="#2c1810" stroke-width="2" fill="none"/>
+  <rect x="60" y="340" width="180" height="40" rx="20" fill="rgba(0,0,0,0.5)"/>
+  <text x="150" y="366" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="bold">엘리자벳펌</text>
+</svg>

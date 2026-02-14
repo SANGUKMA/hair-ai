@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f3e8ff"/><stop offset="100%" stop-color="#e9d5ff"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2c1810"/><stop offset="100%" stop-color="#1a0f0a"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fddcb5"/><stop offset="100%" stop-color="#f5c69a"/></linearGradient>
+  </defs>
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <!-- Neck -->
+  <rect x="125" y="260" width="50" height="60" rx="10" fill="url(#skin)"/>
+  <!-- Hair back -->
+  <ellipse cx="150" cy="180" rx="85" ry="60" fill="url(#hair)"/>
+  <!-- Face -->
+  <ellipse cx="150" cy="195" rx="62" ry="78" fill="url(#skin)"/>
+  <!-- Hair top -->
+  <path d="M80 170 Q85 100 150 90 Q215 100 220 170 Q210 140 190 135 Q170 128 150 130 Q130 128 110 135 Q90 140 80 170Z" fill="url(#hair)"/>
+  <!-- Layered sides -->
+  <path d="M88 170 Q82 200 85 240 Q90 245 95 235 Q92 210 90 190Z" fill="url(#hair)" opacity="0.9"/>
+  <path d="M212 170 Q218 200 215 240 Q210 245 205 235 Q208 210 210 190Z" fill="url(#hair)" opacity="0.9"/>
+  <!-- Layer texture lines -->
+  <path d="M90 180 Q100 195 88 220" stroke="#1a0f0a" stroke-width="1" fill="none" opacity="0.3"/>
+  <path d="M210 180 Q200 195 212 220" stroke="#1a0f0a" stroke-width="1" fill="none" opacity="0.3"/>
+  <!-- Eyes -->
+  <ellipse cx="130" cy="195" rx="6" ry="4" fill="#2c1810"/>
+  <ellipse cx="170" cy="195" rx="6" ry="4" fill="#2c1810"/>
+  <!-- Nose -->
+  <path d="M148 210 Q150 218 152 210" stroke="#d4a574" stroke-width="1.5" fill="none"/>
+  <!-- Lips -->
+  <path d="M140 230 Q150 238 160 230" stroke="#e88b8b" stroke-width="2" fill="#e88b8b" opacity="0.6"/>
+  <!-- Eyebrows -->
+  <path d="M120 183 Q130 178 140 182" stroke="#2c1810" stroke-width="2" fill="none"/>
+  <path d="M160 182 Q170 178 180 183" stroke="#2c1810" stroke-width="2" fill="none"/>
+  <!-- Label -->
+  <rect x="50" y="340" width="200" height="40" rx="20" fill="rgba(0,0,0,0.5)"/>
+  <text x="150" y="366" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="bold">단발 레이어드컷</text>
+</svg>

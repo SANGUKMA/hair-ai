@@ -3,6 +3,7 @@ import React, { useState, useRef, useCallback } from 'react';
 interface ResultViewerProps {
   originalImage: string;
   generatedImage: string;
+  stylistComment?: string;
   onSave: () => void;
   onReset: () => void;
 }
@@ -10,6 +11,7 @@ interface ResultViewerProps {
 export const ResultViewer: React.FC<ResultViewerProps> = ({
   originalImage,
   generatedImage,
+  stylistComment,
   onSave,
   onReset
 }) => {
@@ -94,6 +96,20 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
           </div>
         </div>
       </div>
+
+      {stylistComment && (
+        <div className="mt-5 mx-1 bg-white rounded-2xl border border-purple-100 shadow-sm p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
+              ✂
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-800">원장 스타일링 코멘트</p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 leading-relaxed">{stylistComment}</p>
+        </div>
+      )}
 
       <div className="mt-6 flex gap-4 px-2 mb-8">
         <button

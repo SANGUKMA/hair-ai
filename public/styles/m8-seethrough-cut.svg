@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ecfdf5"/><stop offset="100%" stop-color="#a7f3d0"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2c1810"/><stop offset="100%" stop-color="#1a0f0a"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f5d0a9"/><stop offset="100%" stop-color="#e8b88a"/></linearGradient>
+  </defs>
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect x="130" y="260" width="40" height="55" rx="8" fill="url(#skin)"/>
+  <!-- Face -->
+  <path d="M100 190 Q100 130 150 125 Q200 130 200 190 Q200 250 175 270 Q150 280 125 270 Q100 250 100 190Z" fill="url(#skin)"/>
+  <!-- Hair top -->
+  <path d="M100 170 Q105 110 150 100 Q195 110 200 170 Q190 135 175 125 Q155 115 150 118 Q145 115 125 125 Q110 135 100 170Z" fill="url(#hair)"/>
+  <!-- See-through bangs - thin wispy strands -->
+  <path d="M120 130 L118 165" stroke="url(#hair)" stroke-width="2.5" opacity="0.6"/>
+  <path d="M130 126 L129 168" stroke="url(#hair)" stroke-width="2.5" opacity="0.5"/>
+  <path d="M140 124 L140 170" stroke="url(#hair)" stroke-width="2.5" opacity="0.6"/>
+  <path d="M150 123 L151 168" stroke="url(#hair)" stroke-width="2.5" opacity="0.5"/>
+  <path d="M160 124 L162 170" stroke="url(#hair)" stroke-width="2.5" opacity="0.6"/>
+  <path d="M170 126 L172 168" stroke="url(#hair)" stroke-width="2.5" opacity="0.5"/>
+  <path d="M180 130 L182 165" stroke="url(#hair)" stroke-width="2.5" opacity="0.6"/>
+  <!-- Short sides -->
+  <rect x="96" y="148" width="10" height="40" rx="3" fill="url(#hair)" opacity="0.5"/>
+  <rect x="194" y="148" width="10" height="40" rx="3" fill="url(#hair)" opacity="0.5"/>
+  <!-- Eyes -->
+  <ellipse cx="132" cy="195" rx="5" ry="3.5" fill="#1a1a1a"/>
+  <ellipse cx="168" cy="195" rx="5" ry="3.5" fill="#1a1a1a"/>
+  <path d="M148 210 Q150 216 152 210" stroke="#c99a6b" stroke-width="1.5" fill="none"/>
+  <path d="M142 228 Q150 234 158 228" stroke="#c48b7a" stroke-width="2" fill="none"/>
+  <path d="M122 184 Q132 179 142 183" stroke="#1a1a1a" stroke-width="2.5" fill="none"/>
+  <path d="M158 183 Q168 179 178 184" stroke="#1a1a1a" stroke-width="2.5" fill="none"/>
+  <rect x="75" y="340" width="150" height="40" rx="20" fill="rgba(0,0,0,0.5)"/>
+  <text x="150" y="366" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="bold">시스루컷</text>
+</svg>

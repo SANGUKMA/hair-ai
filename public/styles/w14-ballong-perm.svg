@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff1f2"/><stop offset="100%" stop-color="#fecdd3"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a2c1a"/><stop offset="100%" stop-color="#2c1810"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fddcb5"/><stop offset="100%" stop-color="#f5c69a"/></linearGradient>
+  </defs>
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect x="125" y="260" width="50" height="60" rx="10" fill="url(#skin)"/>
+  <!-- Ballong perm - round voluminous bottom curls -->
+  <!-- Back volume -->
+  <ellipse cx="150" cy="220" rx="95" ry="80" fill="url(#hair)" opacity="0.5"/>
+  <!-- Face -->
+  <ellipse cx="150" cy="195" rx="60" ry="75" fill="url(#skin)"/>
+  <!-- Hair top -->
+  <path d="M80 165 Q84 92 150 82 Q216 92 220 165 Q210 128 192 118 Q170 108 150 112 Q130 108 108 118 Q90 128 80 165Z" fill="url(#hair)"/>
+  <!-- Ballong rounded volume - left -->
+  <path d="M86 165 Q72 190 68 220 Q62 250 72 270 Q65 280 75 295 Q80 300 82 290 Q75 275 80 260 Q70 240 76 215 Q80 195 88 172Z" fill="url(#hair)" opacity="0.9"/>
+  <!-- Ballong rounded volume - right -->
+  <path d="M214 165 Q228 190 232 220 Q238 250 228 270 Q235 280 225 295 Q220 300 218 290 Q225 275 220 260 Q230 240 224 215 Q220 195 212 172Z" fill="url(#hair)" opacity="0.9"/>
+  <!-- Round balloon curl ends -->
+  <ellipse cx="78" cy="260" rx="18" ry="22" fill="url(#hair)" opacity="0.8"/>
+  <ellipse cx="222" cy="260" rx="18" ry="22" fill="url(#hair)" opacity="0.8"/>
+  <ellipse cx="90" cy="285" rx="15" ry="18" fill="url(#hair)" opacity="0.7"/>
+  <ellipse cx="210" cy="285" rx="15" ry="18" fill="url(#hair)" opacity="0.7"/>
+  <!-- Eyes -->
+  <ellipse cx="130" cy="195" rx="6" ry="4" fill="#2c1810"/>
+  <ellipse cx="170" cy="195" rx="6" ry="4" fill="#2c1810"/>
+  <path d="M148 210 Q150 218 152 210" stroke="#d4a574" stroke-width="1.5" fill="none"/>
+  <path d="M140 230 Q150 238 160 230" stroke="#e88b8b" stroke-width="2" fill="#e88b8b" opacity="0.6"/>
+  <path d="M120 183 Q130 178 140 182" stroke="#2c1810" stroke-width="2" fill="none"/>
+  <path d="M160 182 Q170 178 180 183" stroke="#2c1810" stroke-width="2" fill="none"/>
+  <rect x="75" y="340" width="150" height="40" rx="20" fill="rgba(0,0,0,0.5)"/>
+  <text x="150" y="366" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="bold">발롱펌</text>
+</svg>

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fef3c7"/><stop offset="100%" stop-color="#fde68a"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a1a1a"/><stop offset="100%" stop-color="#0d0d0d"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f5d0a9"/><stop offset="100%" stop-color="#e8b88a"/></linearGradient>
+  </defs>
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect x="130" y="260" width="40" height="55" rx="8" fill="url(#skin)"/>
+  <!-- Face -->
+  <path d="M100 190 Q100 130 150 125 Q200 130 200 190 Q200 250 175 270 Q150 280 125 270 Q100 250 100 190Z" fill="url(#skin)"/>
+  <!-- Garma (parted) perm - center/side part with waves -->
+  <!-- Hair base -->
+  <path d="M100 168 Q105 105 150 95 Q195 105 200 168 Q190 130 175 120 Q155 110 150 113 Q145 110 125 120 Q110 130 100 168Z" fill="url(#hair)"/>
+  <!-- Part line -->
+  <line x1="135" y1="95" x2="132" y2="135" stroke="url(#skin)" stroke-width="2" opacity="0.6"/>
+  <!-- Left side - swept with wave -->
+  <path d="M100 160 Q105 130 132 110 Q120 125 108 145 Q100 155 95 170 Q98 165 100 160Z" fill="url(#hair)" opacity="0.9"/>
+  <!-- Right side - more volume with wave -->
+  <path d="M135 110 Q165 105 200 155 Q195 140 185 128 Q170 115 155 110 Q145 108 135 110Z" fill="url(#hair)" opacity="0.9"/>
+  <!-- Wave texture -->
+  <path d="M140 118 Q155 112 170 120 Q180 115 190 128" stroke="#333" stroke-width="1.2" fill="none" opacity="0.3"/>
+  <path d="M108 148 Q115 140 125 148" stroke="#333" stroke-width="1.2" fill="none" opacity="0.3"/>
+  <!-- Short sides -->
+  <rect x="96" y="155" width="10" height="38" rx="3" fill="url(#hair)" opacity="0.4"/>
+  <rect x="194" y="155" width="10" height="38" rx="3" fill="url(#hair)" opacity="0.4"/>
+  <!-- Eyes -->
+  <ellipse cx="132" cy="195" rx="5" ry="3.5" fill="#1a1a1a"/>
+  <ellipse cx="168" cy="195" rx="5" ry="3.5" fill="#1a1a1a"/>
+  <path d="M148 210 Q150 216 152 210" stroke="#c99a6b" stroke-width="1.5" fill="none"/>
+  <path d="M142 228 Q150 234 158 228" stroke="#c48b7a" stroke-width="2" fill="none"/>
+  <path d="M122 184 Q132 179 142 183" stroke="#1a1a1a" stroke-width="2.5" fill="none"/>
+  <path d="M158 183 Q168 179 178 184" stroke="#1a1a1a" stroke-width="2.5" fill="none"/>
+  <rect x="70" y="340" width="160" height="40" rx="20" fill="rgba(0,0,0,0.5)"/>
+  <text x="150" y="366" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="bold">가르마펌</text>
+</svg>

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fdf2f8"/><stop offset="100%" stop-color="#fbcfe8"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a2c1a"/><stop offset="100%" stop-color="#2c1810"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fddcb5"/><stop offset="100%" stop-color="#f5c69a"/></linearGradient>
+  </defs>
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect x="125" y="265" width="50" height="60" rx="10" fill="url(#skin)"/>
+  <!-- Layered perm waves - back -->
+  <path d="M65 160 Q55 220 60 300 Q70 310 75 295 Q68 230 72 175Z" fill="url(#hair)"/>
+  <path d="M235 160 Q245 220 240 300 Q230 310 225 295 Q232 230 228 175Z" fill="url(#hair)"/>
+  <!-- Face -->
+  <ellipse cx="150" cy="200" rx="60" ry="75" fill="url(#skin)"/>
+  <!-- Hair top -->
+  <path d="M78 165 Q82 90 150 80 Q218 90 222 165 Q212 125 192 115 Q170 105 150 108 Q130 105 108 115 Q88 125 78 165Z" fill="url(#hair)"/>
+  <!-- Wavy layered sides -->
+  <path d="M82 165 Q72 190 78 220 Q70 240 76 270 Q68 290 75 310 Q82 315 80 295 Q85 270 78 250 Q85 230 78 210 Q85 190 85 170Z" fill="url(#hair)" opacity="0.9"/>
+  <path d="M218 165 Q228 190 222 220 Q230 240 224 270 Q232 290 225 310 Q218 315 220 295 Q215 270 222 250 Q215 230 222 210 Q215 190 215 170Z" fill="url(#hair)" opacity="0.9"/>
+  <!-- Wave texture -->
+  <path d="M85 190 Q75 210 82 235" stroke="#2c1810" stroke-width="1" fill="none" opacity="0.3"/>
+  <path d="M215 190 Q225 210 218 235" stroke="#2c1810" stroke-width="1" fill="none" opacity="0.3"/>
+  <path d="M80 245 Q72 265 78 285" stroke="#2c1810" stroke-width="1" fill="none" opacity="0.3"/>
+  <path d="M220 245 Q228 265 222 285" stroke="#2c1810" stroke-width="1" fill="none" opacity="0.3"/>
+  <!-- Eyes -->
+  <ellipse cx="130" cy="200" rx="6" ry="4" fill="#2c1810"/>
+  <ellipse cx="170" cy="200" rx="6" ry="4" fill="#2c1810"/>
+  <path d="M148 215 Q150 222 152 215" stroke="#d4a574" stroke-width="1.5" fill="none"/>
+  <path d="M140 234 Q150 242 160 234" stroke="#e88b8b" stroke-width="2" fill="#e88b8b" opacity="0.6"/>
+  <path d="M120 188 Q130 183 140 187" stroke="#2c1810" stroke-width="2" fill="none"/>
+  <path d="M160 187 Q170 183 180 188" stroke="#2c1810" stroke-width="2" fill="none"/>
+  <rect x="65" y="340" width="170" height="40" rx="20" fill="rgba(0,0,0,0.5)"/>
+  <text x="150" y="366" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="bold">레이어드펌</text>
+</svg>

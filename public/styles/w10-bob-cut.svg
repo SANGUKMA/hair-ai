@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fef3c7"/><stop offset="100%" stop-color="#fcd34d"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a1a2e"/><stop offset="100%" stop-color="#0d0d1a"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fddcb5"/><stop offset="100%" stop-color="#f5c69a"/></linearGradient>
+  </defs>
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect x="125" y="260" width="50" height="60" rx="10" fill="url(#skin)"/>
+  <!-- Bob hair - clean straight cut -->
+  <path d="M78 140 Q75 180 78 240 L82 240 Q80 180 82 150Z" fill="url(#hair)"/>
+  <path d="M222 140 Q225 180 222 240 L218 240 Q220 180 218 150Z" fill="url(#hair)"/>
+  <!-- Bob sides - straight clean edges -->
+  <rect x="78" y="140" width="12" height="100" rx="3" fill="url(#hair)" opacity="0.9"/>
+  <rect x="210" y="140" width="12" height="100" rx="3" fill="url(#hair)" opacity="0.9"/>
+  <!-- Face -->
+  <ellipse cx="150" cy="195" rx="62" ry="78" fill="url(#skin)"/>
+  <!-- Hair top - smooth bob -->
+  <path d="M82 160 Q85 100 150 90 Q215 100 218 160 Q210 130 190 120 Q170 112 150 115 Q130 112 110 120 Q90 130 82 160Z" fill="url(#hair)"/>
+  <!-- Bob side panels -->
+  <path d="M88 155 Q82 190 80 240 L95 240 Q92 200 90 165Z" fill="url(#hair)" opacity="0.9"/>
+  <path d="M212 155 Q218 190 220 240 L205 240 Q208 200 210 165Z" fill="url(#hair)" opacity="0.9"/>
+  <!-- Clean bottom line of bob -->
+  <line x1="80" y1="240" x2="95" y2="240" stroke="url(#hair)" stroke-width="3"/>
+  <line x1="205" y1="240" x2="220" y2="240" stroke="url(#hair)" stroke-width="3"/>
+  <!-- Eyes -->
+  <ellipse cx="130" cy="195" rx="6" ry="4" fill="#1a1a2e"/>
+  <ellipse cx="170" cy="195" rx="6" ry="4" fill="#1a1a2e"/>
+  <path d="M148 210 Q150 218 152 210" stroke="#d4a574" stroke-width="1.5" fill="none"/>
+  <path d="M140 230 Q150 238 160 230" stroke="#e88b8b" stroke-width="2" fill="#e88b8b" opacity="0.6"/>
+  <path d="M120 183 Q130 178 140 182" stroke="#1a1a2e" stroke-width="2" fill="none"/>
+  <path d="M160 182 Q170 178 180 183" stroke="#1a1a2e" stroke-width="2" fill="none"/>
+  <rect x="75" y="340" width="150" height="40" rx="20" fill="rgba(0,0,0,0.5)"/>
+  <text x="150" y="366" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="bold">보브컷</text>
+</svg>

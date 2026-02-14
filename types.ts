@@ -7,12 +7,15 @@ export enum AppStep {
 
 export type Gender = 'female' | 'male';
 
+export type StyleCategory = 'cut' | 'perm';
+
 export interface HairStyle {
   id: string;
   name: string;
   nameKo: string;
   description: string;
   gender: Gender;
+  category: StyleCategory;
   imagePath: string;
   tags: string[];
 }

@@ -6,7 +6,7 @@ import { ResultViewer } from './components/ResultViewer';
 import { ColorSelector } from './components/ColorSelector';
 import { AdBanner } from './components/AdBanner';
 import { generateHairstyle } from './services/geminiService';
-import { AppStep, Gender, HairStyle, HairColor } from './types';
+import { AppStep, Gender, StyleCategory, HairStyle, HairColor } from './types';
 import { hairstyles } from './data/hairstyles';
 import { hairColors } from './data/hairColors';
 
@@ -17,13 +17,15 @@ const App: React.FC = () => {
   const [selectedStyle, setSelectedStyle] = useState<HairStyle | null>(null);
   const [styleImage, setStyleImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
+  const [stylistComment, setStylistComment] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<HairColor | null>(
     hairColors.find(c => c.id === 'natural') || null
   );
   const [error, setError] = useState<string | null>(null);
   const [gender, setGender] = useState<Gender>('female');
+  const [styleCategory, setStyleCategory] = useState<StyleCategory>('cut');
 
-  const filtered = hairstyles.filter(s => s.gender === gender);
+  const filtered = hairstyles.filter(s => s.gender === gender && s.category === styleCategory);
 
   const handleStyleClick = async (style: HairStyle) => {
     setSelectedStyle(style);
@@ -57,8 +59,9 @@ const App: React.FC = () => {
         nameKo: selectedColor.nameKo,
         description: selectedColor.description,
       } : undefined;
-      const generated = await generateHairstyle(userImage, styleImage, styleInfo, colorInfo);
-      setResultImage(generated);
+      const result = await generateHairstyle(userImage, styleImage, styleInfo, colorInfo);
+      setResultImage(result.image);
+      setStylistComment(result.comment);
       setStep(AppStep.RESULT);
     } catch (err) {
       console.error(err);
@@ -70,6 +73,7 @@ const App: React.FC = () => {
   const handleReset = useCallback(() => {
     setStep(AppStep.HOME);
     setResultImage(null);
+    setStylistComment('');
     setUserImage(null);
     setStyleImage(null);
     setSelectedStyle(null);
@@ -125,7 +129,7 @@ const App: React.FC = () => {
               {/* Gender Tabs */}
               <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
                 <button
-                  onClick={() => { setGender('female'); setSelectedStyle(null); setStyleImage(null); }}
+                  onClick={() => { setGender('female'); setStyleCategory('cut'); setSelectedStyle(null); setStyleImage(null); }}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                     gender === 'female'
                       ? 'bg-white text-purple-600 shadow-sm'
@@ -135,7 +139,7 @@ const App: React.FC = () => {
                   여성 스타일
                 </button>
                 <button
-                  onClick={() => { setGender('male'); setSelectedStyle(null); setStyleImage(null); }}
+                  onClick={() => { setGender('male'); setStyleCategory('cut'); setSelectedStyle(null); setStyleImage(null); }}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                     gender === 'male'
                       ? 'bg-white text-purple-600 shadow-sm'
@@ -143,6 +147,30 @@ const App: React.FC = () => {
                   }`}
                 >
                   남성 스타일
+                </button>
+              </div>
+
+              {/* Cut / Perm Sub-tabs */}
+              <div className="flex gap-2 mb-4 ml-1">
+                <button
+                  onClick={() => { setStyleCategory('cut'); setSelectedStyle(null); setStyleImage(null); }}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    styleCategory === 'cut'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                  }`}
+                >
+                  컷
+                </button>
+                <button
+                  onClick={() => { setStyleCategory('perm'); setSelectedStyle(null); setStyleImage(null); }}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    styleCategory === 'perm'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                  }`}
+                >
+                  펌
                 </button>
               </div>
 
@@ -183,9 +211,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Ad Banner */}
-            <AdBanner />
-
             {/* Step 3: Hair Color Selection */}
             <div className="mb-5">
               <div className="flex items-center gap-2 mb-3 ml-1">
@@ -208,6 +233,9 @@ const App: React.FC = () => {
                 {error}
               </div>
             )}
+
+            {/* Ad Banner */}
+            <AdBanner />
 
             {/* Fixed bottom button */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-50 via-gray-50 to-transparent z-20">
@@ -262,13 +290,10 @@ const App: React.FC = () => {
             <ResultViewer
               originalImage={userImage}
               generatedImage={resultImage}
+              stylistComment={stylistComment}
               onSave={handleSave}
               onReset={handleReset}
             />
-            {/* Ad Banner on result page */}
-            <div className="mt-2">
-              <AdBanner />
-            </div>
           </div>
         )}
       </main>

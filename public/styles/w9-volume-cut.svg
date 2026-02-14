@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ede9fe"/><stop offset="100%" stop-color="#c4b5fd"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2c1810"/><stop offset="100%" stop-color="#1a0f0a"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fddcb5"/><stop offset="100%" stop-color="#f5c69a"/></linearGradient>
+  </defs>
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect x="125" y="265" width="50" height="60" rx="10" fill="url(#skin)"/>
+  <!-- Big voluminous hair -->
+  <ellipse cx="150" cy="170" rx="105" ry="95" fill="url(#hair)"/>
+  <!-- Extra volume bumps -->
+  <ellipse cx="70" cy="190" rx="30" ry="45" fill="url(#hair)" opacity="0.9"/>
+  <ellipse cx="230" cy="190" rx="30" ry="45" fill="url(#hair)" opacity="0.9"/>
+  <ellipse cx="150" cy="90" rx="60" ry="30" fill="url(#hair)" opacity="0.8"/>
+  <!-- Face -->
+  <ellipse cx="150" cy="200" rx="60" ry="75" fill="url(#skin)"/>
+  <!-- Hair top volume -->
+  <path d="M75 160 Q80 80 150 70 Q220 80 225 160 Q215 120 195 108 Q170 95 150 98 Q130 95 105 108 Q85 120 75 160Z" fill="url(#hair)"/>
+  <!-- Volume side layers -->
+  <path d="M75 160 Q55 200 60 260 Q65 270 70 258 Q65 215 78 175Z" fill="url(#hair)" opacity="0.85"/>
+  <path d="M225 160 Q245 200 240 260 Q235 270 230 258 Q235 215 222 175Z" fill="url(#hair)" opacity="0.85"/>
+  <!-- Eyes -->
+  <ellipse cx="130" cy="200" rx="6" ry="4" fill="#2c1810"/>
+  <ellipse cx="170" cy="200" rx="6" ry="4" fill="#2c1810"/>
+  <path d="M148 215 Q150 222 152 215" stroke="#d4a574" stroke-width="1.5" fill="none"/>
+  <path d="M140 234 Q150 242 160 234" stroke="#e88b8b" stroke-width="2" fill="#e88b8b" opacity="0.6"/>
+  <path d="M120 188 Q130 183 140 187" stroke="#2c1810" stroke-width="2" fill="none"/>
+  <path d="M160 187 Q170 183 180 188" stroke="#2c1810" stroke-width="2" fill="none"/>
+  <rect x="75" y="340" width="150" height="40" rx="20" fill="rgba(0,0,0,0.5)"/>
+  <text x="150" y="366" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="bold">볼륨커트</text>
+</svg>

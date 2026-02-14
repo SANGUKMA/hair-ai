@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fef9c3"/><stop offset="100%" stop-color="#fde68a"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5c3a1e"/><stop offset="100%" stop-color="#3b2314"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fddcb5"/><stop offset="100%" stop-color="#f5c69a"/></linearGradient>
+  </defs>
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect x="125" y="265" width="50" height="60" rx="10" fill="url(#skin)"/>
+  <!-- Jelly perm - tight bouncy curls -->
+  <!-- Back curls -->
+  <ellipse cx="150" cy="210" rx="100" ry="100" fill="url(#hair)" opacity="0.5"/>
+  <!-- Face -->
+  <ellipse cx="150" cy="200" rx="58" ry="72" fill="url(#skin)"/>
+  <!-- Hair top -->
+  <path d="M78 168 Q82 88 150 78 Q218 88 222 168 Q212 128 192 115 Q170 105 150 108 Q130 105 108 115 Q88 128 78 168Z" fill="url(#hair)"/>
+  <!-- Tight spiral curls - left -->
+  <circle cx="72" cy="185" r="15" fill="url(#hair)" opacity="0.85"/>
+  <circle cx="65" cy="215" r="14" fill="url(#hair)" opacity="0.85"/>
+  <circle cx="70" cy="245" r="15" fill="url(#hair)" opacity="0.85"/>
+  <circle cx="68" cy="275" r="14" fill="url(#hair)" opacity="0.85"/>
+  <circle cx="75" cy="300" r="13" fill="url(#hair)" opacity="0.8"/>
+  <!-- Tight spiral curls - right -->
+  <circle cx="228" cy="185" r="15" fill="url(#hair)" opacity="0.85"/>
+  <circle cx="235" cy="215" r="14" fill="url(#hair)" opacity="0.85"/>
+  <circle cx="230" cy="245" r="15" fill="url(#hair)" opacity="0.85"/>
+  <circle cx="232" cy="275" r="14" fill="url(#hair)" opacity="0.85"/>
+  <circle cx="225" cy="300" r="13" fill="url(#hair)" opacity="0.8"/>
+  <!-- Inner curl details -->
+  <path d="M72 178 Q78 185 72 192" stroke="#2c1810" stroke-width="1" fill="none" opacity="0.3"/>
+  <path d="M228 178 Q222 185 228 192" stroke="#2c1810" stroke-width="1" fill="none" opacity="0.3"/>
+  <!-- Eyes -->
+  <ellipse cx="130" cy="200" rx="6" ry="4" fill="#3b2314"/>
+  <ellipse cx="170" cy="200" rx="6" ry="4" fill="#3b2314"/>
+  <path d="M148 215 Q150 222 152 215" stroke="#d4a574" stroke-width="1.5" fill="none"/>
+  <path d="M140 234 Q150 242 160 234" stroke="#e88b8b" stroke-width="2" fill="#e88b8b" opacity="0.6"/>
+  <path d="M120 188 Q130 183 140 187" stroke="#3b2314" stroke-width="2" fill="none"/>
+  <path d="M160 187 Q170 183 180 188" stroke="#3b2314" stroke-width="2" fill="none"/>
+  <rect x="75" y="340" width="150" height="40" rx="20" fill="rgba(0,0,0,0.5)"/>
+  <text x="150" y="366" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="bold">젤리펌</text>
+</svg>

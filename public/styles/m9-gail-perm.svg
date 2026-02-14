@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#eff6ff"/><stop offset="100%" stop-color="#bfdbfe"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a1a1a"/><stop offset="100%" stop-color="#0a0a0a"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f5d0a9"/><stop offset="100%" stop-color="#e8b88a"/></linearGradient>
+  </defs>
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect x="130" y="260" width="40" height="55" rx="8" fill="url(#skin)"/>
+  <!-- Face -->
+  <path d="M100 190 Q100 130 150 125 Q200 130 200 190 Q200 250 175 270 Q150 280 125 270 Q100 250 100 190Z" fill="url(#skin)"/>
+  <!-- Gail perm - short sides + wavy textured top -->
+  <!-- Short faded sides -->
+  <rect x="95" y="148" width="12" height="55" rx="3" fill="url(#hair)" opacity="0.35"/>
+  <rect x="193" y="148" width="12" height="55" rx="3" fill="url(#hair)" opacity="0.35"/>
+  <!-- Wavy top -->
+  <path d="M100 160 Q108 100 150 90 Q192 100 200 160 Q190 125 175 115 Q155 105 150 108 Q145 105 125 115 Q110 125 100 160Z" fill="url(#hair)"/>
+  <!-- Perm wave texture on top -->
+  <path d="M115 130 Q125 118 140 125 Q150 115 165 122 Q175 114 185 128" stroke="#333" stroke-width="1.5" fill="none" opacity="0.3"/>
+  <path d="M120 145 Q130 135 145 140 Q155 132 168 138 Q178 130 188 142" stroke="#333" stroke-width="1.5" fill="none" opacity="0.3"/>
+  <!-- Fade lines -->
+  <line x1="97" y1="165" x2="97" y2="198" stroke="#333" stroke-width="0.5" opacity="0.2"/>
+  <line x1="99" y1="165" x2="99" y2="198" stroke="#333" stroke-width="0.5" opacity="0.2"/>
+  <line x1="201" y1="165" x2="201" y2="198" stroke="#333" stroke-width="0.5" opacity="0.2"/>
+  <line x1="203" y1="165" x2="203" y2="198" stroke="#333" stroke-width="0.5" opacity="0.2"/>
+  <!-- Eyes -->
+  <ellipse cx="132" cy="195" rx="5" ry="3.5" fill="#1a1a1a"/>
+  <ellipse cx="168" cy="195" rx="5" ry="3.5" fill="#1a1a1a"/>
+  <path d="M148 210 Q150 216 152 210" stroke="#c99a6b" stroke-width="1.5" fill="none"/>
+  <path d="M142 228 Q150 234 158 228" stroke="#c48b7a" stroke-width="2" fill="none"/>
+  <path d="M122 184 Q132 179 142 183" stroke="#1a1a1a" stroke-width="2.5" fill="none"/>
+  <path d="M158 183 Q168 179 178 184" stroke="#1a1a1a" stroke-width="2.5" fill="none"/>
+  <rect x="75" y="340" width="150" height="40" rx="20" fill="rgba(0,0,0,0.5)"/>
+  <text x="150" y="366" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="bold">가일펌</text>
+</svg>

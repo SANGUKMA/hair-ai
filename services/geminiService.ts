@@ -30,12 +30,17 @@ export interface ColorInfo {
   description: string;
 }
 
+export interface GenerateResult {
+  image: string;
+  comment: string;
+}
+
 export const generateHairstyle = async (
   userImageBase64: string,
   styleImageBase64: string,
   styleInfo?: StyleInfo,
   colorInfo?: ColorInfo
-): Promise<string> => {
+): Promise<GenerateResult> => {
   const userMime = getMimeType(userImageBase64);
   const styleMime = getMimeType(styleImageBase64);
   const cleanUserImage = cleanBase64(userImageBase64);
@@ -55,62 +60,71 @@ Hair color requested: "${colorInfo.nameKo}" (${colorInfo.name})
 Color details: ${colorInfo.description}`
     : '';
 
-  const prompt = `You are a world-class virtual hair stylist and image synthesis expert specializing in Korean beauty trends.
+  const prompt = `You are a virtual hair stylist AI. Your ONLY job is to change the HAIR on a real person's photo.
 
 ## INPUT
-- Image 1: The client's current photo (Target Person)
-- Image 2: The reference hairstyle to apply
+- Image 1: THE CLIENT — this is the real person. Their face is sacred and must NOT change.
+- Image 2: HAIRSTYLE REFERENCE ONLY — use this ONLY to understand the hair shape, volume, length, and texture. COMPLETELY IGNORE the face/person in Image 2.
 ${styleContext}${colorContext}
 
-## YOUR TASK
-Create a stunning, photorealistic image of the client wearing the reference hairstyle. The result should look like a professional salon "after" photo that makes the client excited and confident about this new look.
+## ABSOLUTE RULE — IDENTITY PRESERVATION
+The output image MUST be the SAME PERSON as Image 1. Not similar — THE SAME.
+If the client's family or friends saw the result, they must instantly say "That's you!"
 
-## CRITICAL RULES
+You are NOT generating a new person. You are NOT blending two faces. You are editing Image 1's hair ONLY.
 
-### 1. Face Preservation (MOST IMPORTANT)
-- Preserve the client's face EXACTLY: same facial structure, eyes, nose, lips, eyebrows, skin tone, skin texture, and facial proportions.
-- The person in the output MUST be clearly recognizable as the same person from Image 1.
-- Do NOT alter, smooth, or beautify the face. Keep it 100% authentic.
+### What must stay IDENTICAL to Image 1 (zero change allowed):
+- Face shape, jawline, chin shape, cheekbone structure
+- Eyes: exact shape, size, spacing, eyelid type (monolid/double), eye color
+- Nose: exact shape, width, bridge height, nostril shape
+- Lips: exact shape, thickness, lip line
+- Eyebrows: exact shape, thickness, arch
+- Skin: exact tone, texture, wrinkles, moles, freckles, blemishes — keep ALL of them
+- Ears: exact shape and position
+- Neck and shoulders: exact proportions
+- Facial expression: keep the same or neutral
+- Apparent age: must look the same age as in Image 1 (do NOT make them look younger or older)
 
-### 2. Face Shape Analysis & Hairstyle Adaptation
-- Analyze the client's face shape (oval, round, square, heart, oblong, diamond).
-- Adapt the reference hairstyle to FLATTER the client's specific face shape:
-  · Round face → add volume on top, keep sides sleeker to elongate
-  · Square face → soften jawline with layers or waves around the face
-  · Oblong face → add width at sides, consider bangs to shorten appearance
-  · Heart face → add volume below ears, softer framing around forehead
-  · Oval face → most styles work, maintain balanced proportions
-  · Diamond face → add width at forehead and chin area with styling
-- Adjust hair volume, length framing, and parting to complement facial proportions.
+### What you MUST NOT do:
+- Do NOT use ANY facial features from Image 2 (the hairstyle reference)
+- Do NOT smooth, filter, or beautify the skin
+- Do NOT reshape the face, slim the jaw, enlarge the eyes, or alter any feature
+- Do NOT change the skin tone or skin color
+- Do NOT remove wrinkles, dark circles, moles, scars, or any skin detail
+- Do NOT make the person look younger or more attractive — preserve their real appearance
+- Do NOT blend or morph the two faces together in any way
 
-### 3. Natural Integration
-- The hairline must blend seamlessly with the forehead — no sharp cutoffs or visible edges.
-- Hair strands near the face (baby hairs, sideburns, face-framing layers) must look natural.
-- Ensure proper shadows and highlights where hair meets skin (temples, ears, neck).
-- Hair should interact naturally with ears (partially covering or tucking behind as appropriate).
+## HAIR EDITING INSTRUCTIONS
 
-### 4. Hair Color Application
-${colorInfo ? `- IMPORTANT: Apply the requested hair color "${colorInfo.nameKo}" to the hairstyle.
-- Color specification: ${colorInfo.description}
-- The color must look like a professional salon dye job — even, glossy, and well-blended.
-- Ensure natural color gradation: slightly darker at roots, richer through mid-lengths, with natural light reflection.
-- For highlight/two-tone styles: blend the colors seamlessly with natural transitions.
-- The hair color must complement the client's skin undertone for a flattering result.` : `- Keep the hair color natural, matching the reference hairstyle image or the client's original color.
-- Hair color should complement the client's skin undertone (warm/cool/neutral).`}
+### What to change (ONLY the hair):
+1. Remove/replace the client's current hair with the hairstyle shown in Image 2
+2. Match the hair's shape, layering, volume, curl pattern, and length from Image 2
+3. Adapt the hairstyle naturally to the client's head shape and face proportions
 
-### 5. Lighting & Color Harmony
-- Match the hair's lighting direction, intensity, and color temperature to the original photo.
-- Hair color reflections and shine must be consistent with the photo's light source.
-- Ensure consistent shadow casting from hair onto face and neck.
+### Natural hair integration:
+- Hairline must match the client's ORIGINAL hairline from Image 1
+- Hair must sit naturally on the client's head with correct perspective and scale
+- Face-framing strands, baby hairs, and sideburns must blend with the client's skin
+- Proper shadows where hair meets forehead, temples, ears, and neck
 
-### 6. Photo Quality
-- Output must be high-resolution, sharp, and photorealistic.
-- Professional salon photography quality with natural bokeh if the original has it.
-- Same camera angle, framing, and background as the original photo.
-- The image should look like it was taken at a premium hair salon.
+### Hair color:
+${colorInfo ? `- Apply the requested color "${colorInfo.nameKo}": ${colorInfo.description}
+- Make it look like a professional salon coloring — even, with natural root-to-tip gradation.` : `- Use a natural hair color that matches the reference hairstyle or the client's original hair color.`}
+
+## PHOTO QUALITY
+- Keep the SAME camera angle, background, and framing as Image 1
+- Match lighting direction and intensity from Image 1
+- Photorealistic, sharp, high-resolution output
+- The result should look like the client simply got a new haircut at a salon
 
 ## OUTPUT
-Generate exactly ONE photorealistic image. No text, no watermarks, no split images. Just the client with their beautiful new hairstyle, looking natural and confident.`;
+1. Generate exactly ONE photorealistic image. No text, no watermarks, no collages. Just the client — the SAME person from Image 1 — with only their hair changed.
+2. After the image, write a short stylist comment in Korean (2-3 sentences).
+   - Write as a warm, professional salon director ("원장") speaking directly to the client.
+   - Mention the specific hairstyle name and explain WHY this style suits the client's face shape, features, or vibe.
+   - End with an encouraging, confidence-boosting remark.
+   - Keep it natural and conversational Korean, not formal or stiff.
+   - Do NOT include any hashtags, emojis, or English words.`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
@@ -130,14 +144,23 @@ Generate exactly ONE photorealistic image. No text, no watermarks, no split imag
   });
 
   const candidates = response.candidates;
+  let image: string | null = null;
+  let comment = '';
+
   if (candidates && candidates.length > 0 && candidates[0].content?.parts) {
     for (const part of candidates[0].content.parts) {
       if (part.inlineData?.data) {
         const mime = part.inlineData.mimeType || 'image/png';
-        return `data:${mime};base64,${part.inlineData.data}`;
+        image = `data:${mime};base64,${part.inlineData.data}`;
+      } else if (part.text) {
+        comment += part.text;
       }
     }
   }
 
-  throw new Error("No image data in Gemini response. finishReason: " + candidates?.[0]?.finishReason);
+  if (!image) {
+    throw new Error("No image data in Gemini response. finishReason: " + candidates?.[0]?.finishReason);
+  }
+
+  return { image, comment: comment.trim() };
 };
