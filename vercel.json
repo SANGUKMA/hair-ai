@@ -2,7 +2,7 @@
   "functions": {
     "api/generate.ts": {
       "maxDuration": 60,
-      "includeFiles": "public/styles/**"
+      "includeFiles": "{data,public/styles}/**"
     }
   }
 }

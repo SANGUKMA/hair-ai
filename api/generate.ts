@@ -2,9 +2,26 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { GoogleGenAI } from '@google/genai';
-import { hairstyles } from '../data/hairstyles';
-import { hairColors } from '../data/hairColors';
 import type { HairColor, HairStyle } from '../types';
+
+// 이 파일에는 상대경로 '값' import를 두지 않는다. package.json이 "type": "module"이라
+// 배포된 함수는 ESM으로 로드되고, ESM은 확장자 없는 상대경로를 해석하지 못해
+// 모듈 로딩 단계에서 통째로 죽는다(FUNCTION_INVOCATION_FAILED).
+// 스타일/컬러 데이터는 vercel.json의 includeFiles로 번들에 넣고 런타임에 읽는다.
+// (위 import type은 컴파일 시 완전히 제거되므로 안전하다)
+const DATA_DIR = path.join(process.cwd(), 'data');
+
+let dataCache: { styles: HairStyle[]; colors: HairColor[] } | null = null;
+const loadData = async () => {
+  if (!dataCache) {
+    const [styles, colors] = await Promise.all([
+      readFile(path.join(DATA_DIR, 'hairstyles.json'), 'utf8'),
+      readFile(path.join(DATA_DIR, 'hairColors.json'), 'utf8'),
+    ]);
+    dataCache = { styles: JSON.parse(styles), colors: JSON.parse(colors) };
+  }
+  return dataCache;
+};
 
 // 이미지 생성은 10-15초가 걸린다. 기본 타임아웃(10s)으로는 부족하다.
 export const config = { maxDuration: 60 };
@@ -182,7 +199,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
-  const style = hairstyles.find(s => s.id === body.styleId);
+  let data: { styles: HairStyle[]; colors: HairColor[] };
+  try {
+    data = await loadData();
+  } catch (err) {
+    console.error('Failed to load style data:', err);
+    sendJson(res, 500, { error: 'Server is not configured.' });
+    return;
+  }
+
+  const style = data.styles.find(s => s.id === body.styleId);
   if (!style) {
     sendJson(res, 400, { error: 'Unknown "styleId".' });
     return;
@@ -191,7 +217,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   // 'natural'은 "염색 안함"이라 색상 지시를 아예 넣지 않는다.
   const color =
     typeof body.colorId === 'string' && body.colorId !== 'natural'
-      ? hairColors.find(c => c.id === body.colorId)
+      ? data.colors.find(c => c.id === body.colorId)
       : undefined;
 
   try {
