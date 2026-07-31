@@ -8,26 +8,31 @@ interface CameraCaptureProps {
 export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  // 스트림은 렌더에 쓰이지 않고, startCamera가 항상 최신 값을 봐야 하므로 ref로 관리한다.
+  const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
+  const stopCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+  }, []);
+
   const startCamera = useCallback(async (facing: 'user' | 'environment') => {
-    // Stop existing stream
-    if (stream) {
-      stream.getTracks().forEach(t => t.stop());
-    }
+    stopCamera();
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
+        // zoom은 표준 MediaTrackConstraints에는 없지만, 모바일 브라우저에서
+        // 기본 확대 상태로 열리는 것을 막아준다.
         video: {
           facingMode: facing,
           width: { ideal: 640 },
           height: { ideal: 480 },
-          zoom: { ideal: 1 } as any,
-        },
+          zoom: { ideal: 1 },
+        } as MediaTrackConstraints,
         audio: false,
       });
-      setStream(mediaStream);
+      streamRef.current = mediaStream;
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
@@ -35,13 +40,11 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose
     } catch {
       setError('카메라에 접근할 수 없습니다. 브라우저 권한을 확인해주세요.');
     }
-  }, []);
+  }, [stopCamera]);
 
   useEffect(() => {
     startCamera(facingMode);
-    return () => {
-      stream?.getTracks().forEach(t => t.stop());
-    };
+    return stopCamera;
   }, []);
 
   const handleFlip = () => {
@@ -75,13 +78,12 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose
     ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
     const base64 = canvas.toDataURL('image/jpeg', 0.9);
 
-    // Stop camera
-    stream?.getTracks().forEach(t => t.stop());
+    stopCamera();
     onCapture(base64);
   };
 
   const handleClose = () => {
-    stream?.getTracks().forEach(t => t.stop());
+    stopCamera();
     onClose();
   };
 

@@ -15,7 +15,6 @@ const App: React.FC = () => {
   const [showCamera, setShowCamera] = useState(false);
   const [userImage, setUserImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<HairStyle | null>(null);
-  const [styleImage, setStyleImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [stylistComment, setStylistComment] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<HairColor | null>(
@@ -27,39 +26,12 @@ const App: React.FC = () => {
 
   const filtered = hairstyles.filter(s => s.gender === gender && s.category === styleCategory);
 
-  const handleStyleClick = async (style: HairStyle) => {
-    setSelectedStyle(style);
-    try {
-      const res = await fetch(style.imagePath);
-      const blob = await res.blob();
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setStyleImage(reader.result as string);
-      };
-      reader.readAsDataURL(blob);
-    } catch {
-      setStyleImage(null);
-    }
-  };
-
   const handleGenerate = async () => {
-    if (!userImage || !styleImage) return;
+    if (!userImage || !selectedStyle) return;
     setStep(AppStep.PROCESSING);
     setError(null);
     try {
-      const styleInfo = selectedStyle ? {
-        name: selectedStyle.name,
-        nameKo: selectedStyle.nameKo,
-        description: selectedStyle.description,
-        tags: selectedStyle.tags,
-        gender: selectedStyle.gender,
-      } : undefined;
-      const colorInfo = (selectedColor && selectedColor.id !== 'natural') ? {
-        name: selectedColor.name,
-        nameKo: selectedColor.nameKo,
-        description: selectedColor.description,
-      } : undefined;
-      const result = await generateHairstyle(userImage, styleImage, styleInfo, colorInfo);
+      const result = await generateHairstyle(userImage, selectedStyle.id, selectedColor?.id);
       setResultImage(result.image);
       setStylistComment(result.comment);
       setStep(AppStep.RESULT);
@@ -75,7 +47,6 @@ const App: React.FC = () => {
     setResultImage(null);
     setStylistComment('');
     setUserImage(null);
-    setStyleImage(null);
     setSelectedStyle(null);
     setSelectedColor(hairColors.find(c => c.id === 'natural') || null);
     setError(null);
@@ -91,7 +62,7 @@ const App: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const isReady = userImage && styleImage;
+  const isReady = userImage && selectedStyle;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
@@ -129,7 +100,7 @@ const App: React.FC = () => {
               {/* Gender Tabs */}
               <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
                 <button
-                  onClick={() => { setGender('female'); setStyleCategory('cut'); setSelectedStyle(null); setStyleImage(null); }}
+                  onClick={() => { setGender('female'); setStyleCategory('cut'); setSelectedStyle(null); }}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                     gender === 'female'
                       ? 'bg-white text-purple-600 shadow-sm'
@@ -139,7 +110,7 @@ const App: React.FC = () => {
                   여성 스타일
                 </button>
                 <button
-                  onClick={() => { setGender('male'); setStyleCategory('cut'); setSelectedStyle(null); setStyleImage(null); }}
+                  onClick={() => { setGender('male'); setStyleCategory('cut'); setSelectedStyle(null); }}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                     gender === 'male'
                       ? 'bg-white text-purple-600 shadow-sm'
@@ -153,7 +124,7 @@ const App: React.FC = () => {
               {/* Cut / Perm Sub-tabs */}
               <div className="flex gap-2 mb-4 ml-1">
                 <button
-                  onClick={() => { setStyleCategory('cut'); setSelectedStyle(null); setStyleImage(null); }}
+                  onClick={() => { setStyleCategory('cut'); setSelectedStyle(null); }}
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     styleCategory === 'cut'
                       ? 'bg-purple-600 text-white shadow-sm'
@@ -163,7 +134,7 @@ const App: React.FC = () => {
                   컷
                 </button>
                 <button
-                  onClick={() => { setStyleCategory('perm'); setSelectedStyle(null); setStyleImage(null); }}
+                  onClick={() => { setStyleCategory('perm'); setSelectedStyle(null); }}
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     styleCategory === 'perm'
                       ? 'bg-purple-600 text-white shadow-sm'
@@ -179,7 +150,7 @@ const App: React.FC = () => {
                 {filtered.map(style => (
                   <button
                     key={style.id}
-                    onClick={() => handleStyleClick(style)}
+                    onClick={() => setSelectedStyle(style)}
                     className={`group relative rounded-2xl overflow-hidden text-left focus:outline-none transition-all duration-200 ${
                       selectedStyle?.id === style.id
                         ? 'ring-3 ring-purple-500 ring-offset-2 scale-[0.97]'
@@ -250,7 +221,7 @@ const App: React.FC = () => {
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
                   `}
                 >
-                  {!userImage ? '사진을 업로드하세요' : !styleImage ? '스타일을 선택하세요' : '헤어스타일 시뮬레이션'}
+                  {!userImage ? '사진을 업로드하세요' : !selectedStyle ? '스타일을 선택하세요' : '헤어스타일 시뮬레이션'}
                 </button>
               </div>
             </div>
