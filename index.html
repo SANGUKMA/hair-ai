@@ -27,6 +27,17 @@
     <meta name="twitter:description" content="사진 한 장으로 얼굴형에 맞는 스타일을 추천해 드립니다. 발급받으신 회원 코드로 입장하세요." />
     <meta name="twitter:image" content="https://hairfit-ai-tau.vercel.app/og-image.jpg" />
 
+    <!-- 홈 화면 앱(PWA). 회원이 "홈 화면에 추가"하면 주소창 없이 전체 화면으로 실행된다. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <!-- iOS는 manifest를 읽지 않아 아래 항목들이 따로 필요하다 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="HairFit AI" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>

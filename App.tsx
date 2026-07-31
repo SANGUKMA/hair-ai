@@ -7,6 +7,7 @@ import { ColorSelector } from './components/ColorSelector';
 import { AdBanner } from './components/AdBanner';
 import { StyleRecommendation } from './components/StyleRecommendation';
 import { AccessGate } from './components/AccessGate';
+import { InstallHint } from './components/InstallHint';
 import { AccessDeniedError, generateHairstyle, recommendStyles } from './services/geminiService';
 import { getAccessCode } from './utils/accessCode';
 import { AppStep, Gender, StyleCategory, HairStyle, HairColor, RecommendResult } from './types';
@@ -132,11 +133,17 @@ const App: React.FC = () => {
   const isReady = userImage && selectedStyle;
 
   if (!isUnlocked) {
-    return <AccessGate onUnlocked={() => setIsUnlocked(true)} />;
+    return (
+      <>
+        <InstallHint />
+        <AccessGate onUnlocked={() => setIsUnlocked(true)} />
+      </>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      <InstallHint />
       {showCamera && (
         <CameraCapture
           onCapture={(base64) => {
