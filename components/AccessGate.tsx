@@ -11,9 +11,16 @@ export const AccessGate: React.FC<AccessGateProps> = ({ onUnlocked }) => {
   const [error, setError] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(false);
 
+  // 어떤 형태로 넣든 HF-XXXX-XXXX 모양으로 정리한다.
+  // 붙여넣기, 하이픈 없이 입력, 공백 섞임을 모두 받아준다.
+  const formatCode = (raw: string) => {
+    const v = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+    return [v.slice(0, 2), v.slice(2, 6), v.slice(6, 10)].filter(Boolean).join('-');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = code.trim().toUpperCase();
+    const trimmed = formatCode(code);
     if (!trimmed || isChecking) return;
 
     setIsChecking(true);
@@ -52,8 +59,8 @@ export const AccessGate: React.FC<AccessGateProps> = ({ onUnlocked }) => {
           <input
             type="text"
             value={code}
-            onChange={e => setCode(e.target.value.toUpperCase())}
-            placeholder="회원 코드"
+            onChange={e => setCode(formatCode(e.target.value))}
+            placeholder="HF-0000-0000"
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}

@@ -29,11 +29,12 @@ export const config = { maxDuration: 60 };
 // 회원 코드는 Vercel 환경변수로만 관리한다. 저장소가 공개라 커밋하면 그대로 유출된다.
 // 서버는 "유효한 코드 집합"만 알고 누구의 코드인지는 모른다. 코드↔회원 매핑은
 // 운영자가 따로 보관한다(서버에 개인정보를 두지 않기 위함).
+// 하이픈·공백은 무시하고 비교한다. 코드를 전화로 불러주거나 종이에서 옮겨 적는
+// 상황이라 "HF-A7K2-9QX4"를 "hf a7k2 9qx4"나 "HFA7K29QX4"로 넣는 경우가 생긴다.
+const normalizeCode = (v: string) => v.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
 const MEMBER_CODES = new Set(
-  (process.env.MEMBER_CODES || '')
-    .split(',')
-    .map(c => c.trim().toUpperCase())
-    .filter(Boolean)
+  (process.env.MEMBER_CODES || '').split(',').map(normalizeCode).filter(Boolean)
 );
 
 const DAILY_LIMIT = Number(process.env.DAILY_LIMIT_PER_CODE) || 20;
@@ -410,8 +411,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
-  const accessCode =
-    typeof body.accessCode === 'string' ? body.accessCode.trim().toUpperCase() : '';
+  const accessCode = typeof body.accessCode === 'string' ? normalizeCode(body.accessCode) : '';
   if (!MEMBER_CODES.has(accessCode)) {
     sendJson(res, 401, { error: '회원 코드가 올바르지 않습니다.' });
     return;
