@@ -23,10 +23,17 @@ const apiDevServer = (): Plugin => ({
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
-  // API 키는 서버 전용이다. 클라이언트 번들에 절대 주입하지 않는다.
-  // dev 미들웨어 핸들러가 읽을 수 있도록 .env.local 값만 process.env로 넘긴다.
-  if (env.GEMINI_API_KEY) {
-    process.env.GEMINI_API_KEY = env.GEMINI_API_KEY;
+  // 아래 값들은 모두 서버 전용이다. 클라이언트 번들에 절대 주입하지 않는다.
+  // dev 미들웨어의 핸들러가 읽을 수 있도록 .env.local 값만 process.env로 넘긴다.
+  for (const key of [
+    'GEMINI_API_KEY',
+    'GEMINI_IMAGE_MODEL',
+    'GEMINI_TEXT_MODEL',
+    'RETOUCH_LEVEL',
+    'MEMBER_CODES',
+    'DAILY_LIMIT_PER_CODE',
+  ]) {
+    if (env[key]) process.env[key] = env[key];
   }
 
   return {

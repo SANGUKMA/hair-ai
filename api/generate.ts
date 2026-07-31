@@ -26,6 +26,34 @@ const loadData = async () => {
 // 이미지 생성은 10-15초가 걸린다. 기본 타임아웃(10s)으로는 부족하다.
 export const config = { maxDuration: 60 };
 
+// 회원 코드는 Vercel 환경변수로만 관리한다. 저장소가 공개라 커밋하면 그대로 유출된다.
+// 서버는 "유효한 코드 집합"만 알고 누구의 코드인지는 모른다. 코드↔회원 매핑은
+// 운영자가 따로 보관한다(서버에 개인정보를 두지 않기 위함).
+const MEMBER_CODES = new Set(
+  (process.env.MEMBER_CODES || '')
+    .split(',')
+    .map(c => c.trim().toUpperCase())
+    .filter(Boolean)
+);
+
+const DAILY_LIMIT = Number(process.env.DAILY_LIMIT_PER_CODE) || 20;
+
+// 서버리스는 인스턴스마다 메모리가 따로라 이 카운터는 정확하지 않다.
+// 정확한 제한이 아니라, 코드 하나가 새어나갔을 때 한 번에 예산을 태우는 걸
+// 늦추기 위한 최소 방어선이다. 정확히 하려면 외부 저장소(KV)가 필요하다.
+const usage = new Map<string, { day: string; count: number }>();
+
+const exceedsDailyLimit = (code: string): boolean => {
+  const day = new Date().toISOString().slice(0, 10);
+  const entry = usage.get(code);
+  if (!entry || entry.day !== day) {
+    usage.set(code, { day, count: 1 });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > DAILY_LIMIT;
+};
+
 const MAX_BODY_BYTES = 6 * 1024 * 1024;
 
 let client: GoogleGenAI | null = null;
@@ -356,6 +384,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   let body: {
+    accessCode?: unknown;
     action?: unknown;
     userImage?: unknown;
     styleId?: unknown;
@@ -373,12 +402,44 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
+  // 회원 확인은 비용이 드는 작업 앞에서 가장 먼저 한다.
+  // 설정이 안 된 상태에서는 전부 막는다. 열어두면 접근 제어가 없는 것과 같다.
+  if (!MEMBER_CODES.size) {
+    console.error('MEMBER_CODES is not configured — refusing every request.');
+    sendJson(res, 503, { error: '서비스 준비 중입니다. 잠시 후 다시 시도해주세요.' });
+    return;
+  }
+
+  const accessCode =
+    typeof body.accessCode === 'string' ? body.accessCode.trim().toUpperCase() : '';
+  if (!MEMBER_CODES.has(accessCode)) {
+    sendJson(res, 401, { error: '회원 코드가 올바르지 않습니다.' });
+    return;
+  }
+
+  // 코드 확인 전용. 이미지도 필요 없고 일일 한도도 소모하지 않는다.
+  if (body.action === 'verify') {
+    sendJson(res, 200, { ok: true });
+    return;
+  }
+
+  if (exceedsDailyLimit(accessCode)) {
+    console.warn(`[usage] code=${accessCode} exceeded the daily limit of ${DAILY_LIMIT}`);
+    sendJson(res, 429, {
+      error: `오늘 사용 가능한 횟수(${DAILY_LIMIT}회)를 모두 사용하셨습니다. 내일 다시 이용해주세요.`,
+    });
+    return;
+  }
+
   const userImageMatch =
     typeof body.userImage === 'string' ? body.userImage.match(USER_IMAGE_PATTERN) : null;
   if (!userImageMatch) {
     sendJson(res, 400, { error: 'A base64 image data URI is required in "userImage".' });
     return;
   }
+
+  // 코드별 사용량은 로그로 남긴다. 어느 회원인지는 운영자의 명단에서만 확인된다.
+  console.log(`[usage] code=${accessCode} action=${body.action === 'recommend' ? 'recommend' : 'generate'}`);
 
   let data: { styles: HairStyle[]; colors: HairColor[] };
   try {

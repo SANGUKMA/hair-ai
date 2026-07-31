@@ -6,12 +6,15 @@ import { ResultViewer } from './components/ResultViewer';
 import { ColorSelector } from './components/ColorSelector';
 import { AdBanner } from './components/AdBanner';
 import { StyleRecommendation } from './components/StyleRecommendation';
-import { generateHairstyle, recommendStyles } from './services/geminiService';
+import { AccessGate } from './components/AccessGate';
+import { AccessDeniedError, generateHairstyle, recommendStyles } from './services/geminiService';
+import { getAccessCode } from './utils/accessCode';
 import { AppStep, Gender, StyleCategory, HairStyle, HairColor, RecommendResult } from './types';
 import { hairstyles } from './data/hairstyles';
 import { hairColors } from './data/hairColors';
 
 const App: React.FC = () => {
+  const [isUnlocked, setIsUnlocked] = useState(() => Boolean(getAccessCode()));
   const [step, setStep] = useState<AppStep>(AppStep.HOME);
   const [showCamera, setShowCamera] = useState(false);
   const [userImage, setUserImage] = useState<string | null>(null);
@@ -47,6 +50,8 @@ const App: React.FC = () => {
       setRecommendation(result);
     } catch (err) {
       // 추천은 부가 기능이라 실패해도 스타일을 직접 고르면 된다. 화면을 막지 않는다.
+      // 다만 코드가 거부됐다면 더 진행할 수 없으므로 입력 화면으로 되돌린다.
+      if (err instanceof AccessDeniedError) setIsUnlocked(false);
       console.error('추천 실패:', err);
     } finally {
       setIsRecommending(false);
@@ -88,7 +93,16 @@ const App: React.FC = () => {
       setStep(AppStep.RESULT);
     } catch (err) {
       console.error(err);
-      setError("헤어스타일 생성에 실패했습니다. 얼굴이 잘 보이는 사진으로 다시 시도해주세요.");
+      if (err instanceof AccessDeniedError) {
+        setIsUnlocked(false);
+        return;
+      }
+      // 한도 초과처럼 서버가 이유를 알려준 경우엔 그 문구를 그대로 보여준다.
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : '헤어스타일 생성에 실패했습니다. 얼굴이 잘 보이는 사진으로 다시 시도해주세요.'
+      );
       setStep(AppStep.HOME);
     }
   };
@@ -116,6 +130,10 @@ const App: React.FC = () => {
   };
 
   const isReady = userImage && selectedStyle;
+
+  if (!isUnlocked) {
+    return <AccessGate onUnlocked={() => setIsUnlocked(true)} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
