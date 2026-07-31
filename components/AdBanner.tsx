@@ -53,7 +53,7 @@ export const AdBanner: React.FC = () => {
             </p>
             <div className="flex items-center gap-2 mt-2">
               <span className="text-xs font-bold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full">
-                셋트 100,000원
+                셋트 110,000원
               </span>
               <span className="text-[9px] text-gray-400 line-through">150,000원</span>
             </div>
