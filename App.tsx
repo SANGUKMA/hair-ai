@@ -1,12 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Header } from './components/Header';
 import { ImageUploader } from './components/ImageUploader';
 import { CameraCapture } from './components/CameraCapture';
 import { ResultViewer } from './components/ResultViewer';
 import { ColorSelector } from './components/ColorSelector';
 import { AdBanner } from './components/AdBanner';
-import { generateHairstyle } from './services/geminiService';
-import { AppStep, Gender, StyleCategory, HairStyle, HairColor } from './types';
+import { StyleRecommendation } from './components/StyleRecommendation';
+import { generateHairstyle, recommendStyles } from './services/geminiService';
+import { AppStep, Gender, StyleCategory, HairStyle, HairColor, RecommendResult } from './types';
 import { hairstyles } from './data/hairstyles';
 import { hairColors } from './data/hairColors';
 
@@ -24,14 +25,64 @@ const App: React.FC = () => {
   const [gender, setGender] = useState<Gender>('female');
   const [styleCategory, setStyleCategory] = useState<StyleCategory>('cut');
 
+  const [recommendation, setRecommendation] = useState<RecommendResult | null>(null);
+  const [isRecommending, setIsRecommending] = useState(false);
+  // 성별을 오갈 때 같은 사진으로 반복 호출하지 않도록 성별별 결과를 캐시한다.
+  const recommendCache = useRef<Map<Gender, RecommendResult>>(new Map());
+
   const filtered = hairstyles.filter(s => s.gender === gender && s.category === styleCategory);
+  const recommendedIds = new Set(recommendation?.recommendations.map(r => r.styleId));
+
+  const requestRecommendation = useCallback(async (image: string, target: Gender) => {
+    const cached = recommendCache.current.get(target);
+    if (cached) {
+      setRecommendation(cached);
+      return;
+    }
+    setIsRecommending(true);
+    setRecommendation(null);
+    try {
+      const result = await recommendStyles(image, target);
+      recommendCache.current.set(target, result);
+      setRecommendation(result);
+    } catch (err) {
+      // 추천은 부가 기능이라 실패해도 스타일을 직접 고르면 된다. 화면을 막지 않는다.
+      console.error('추천 실패:', err);
+    } finally {
+      setIsRecommending(false);
+    }
+  }, []);
+
+  const handleUserImage = (image: string) => {
+    recommendCache.current.clear();
+    setUserImage(image);
+    requestRecommendation(image, gender);
+  };
+
+  const handleGenderChange = (next: Gender) => {
+    setGender(next);
+    setStyleCategory('cut');
+    setSelectedStyle(null);
+    if (userImage) requestRecommendation(userImage, next);
+  };
+
+  // 추천 카드에서 고른 스타일이 아래 그리드에도 보이도록 카테고리 탭을 맞춰준다.
+  const handleRecommendedStyle = (style: HairStyle) => {
+    setSelectedStyle(style);
+    setStyleCategory(style.category);
+  };
 
   const handleGenerate = async () => {
     if (!userImage || !selectedStyle) return;
     setStep(AppStep.PROCESSING);
     setError(null);
     try {
-      const result = await generateHairstyle(userImage, selectedStyle.id, selectedColor?.id);
+      const result = await generateHairstyle(
+        userImage,
+        selectedStyle.id,
+        selectedColor?.id,
+        recommendation?.faceShape
+      );
       setResultImage(result.image);
       setStylistComment(result.comment);
       setStep(AppStep.RESULT);
@@ -50,6 +101,8 @@ const App: React.FC = () => {
     setSelectedStyle(null);
     setSelectedColor(hairColors.find(c => c.id === 'natural') || null);
     setError(null);
+    setRecommendation(null);
+    recommendCache.current.clear();
   }, []);
 
   const handleSave = () => {
@@ -69,7 +122,7 @@ const App: React.FC = () => {
       {showCamera && (
         <CameraCapture
           onCapture={(base64) => {
-            setUserImage(base64);
+            handleUserImage(base64);
             setShowCamera(false);
           }}
           onClose={() => setShowCamera(false)}
@@ -87,7 +140,7 @@ const App: React.FC = () => {
                 label="내 사진"
                 description="얼굴이 잘 보이는 정면 사진"
                 imageSrc={userImage}
-                onImageSelected={setUserImage}
+                onImageSelected={handleUserImage}
                 onCameraClick={() => setShowCamera(true)}
                 isActive={!userImage}
               />
@@ -97,10 +150,19 @@ const App: React.FC = () => {
             <div className="mb-5">
               <p className="text-xs font-bold text-gray-700 mb-3 ml-1 uppercase tracking-wider">Step 2. 헤어스타일 선택</p>
 
+              {/* AI recommendation, shown once a photo is available */}
+              <StyleRecommendation
+                result={recommendation}
+                styles={hairstyles}
+                isLoading={isRecommending}
+                selectedStyleId={selectedStyle?.id}
+                onStyleSelected={handleRecommendedStyle}
+              />
+
               {/* Gender Tabs */}
               <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
                 <button
-                  onClick={() => { setGender('female'); setStyleCategory('cut'); setSelectedStyle(null); }}
+                  onClick={() => handleGenderChange('female')}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                     gender === 'female'
                       ? 'bg-white text-purple-600 shadow-sm'
@@ -110,7 +172,7 @@ const App: React.FC = () => {
                   여성 스타일
                 </button>
                 <button
-                  onClick={() => { setGender('male'); setStyleCategory('cut'); setSelectedStyle(null); }}
+                  onClick={() => handleGenderChange('male')}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                     gender === 'male'
                       ? 'bg-white text-purple-600 shadow-sm'
@@ -171,6 +233,11 @@ const App: React.FC = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="white" className="w-3.5 h-3.5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                         </svg>
+                      </div>
+                    )}
+                    {recommendedIds.has(style.id) && (
+                      <div className="absolute top-2 left-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow">
+                        추천
                       </div>
                     )}
                     <div className="absolute bottom-0 left-0 right-0 p-2">

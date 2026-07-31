@@ -1,8 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { readFile } from 'fs/promises';
 import path from 'path';
-import { GoogleGenAI } from '@google/genai';
-import type { HairColor, HairStyle } from '../types';
+import { GoogleGenAI, Type } from '@google/genai';
+import type { FaceShape, HairColor, HairStyle } from '../types';
 
 // 이 파일에는 상대경로 '값' import를 두지 않는다. package.json이 "type": "module"이라
 // 배포된 함수는 ESM으로 로드되고, ESM은 확장자 없는 상대경로를 해석하지 못해
@@ -88,13 +88,87 @@ const loadStyleImage = async (style: HairStyle) => {
 
 // 모델 교체는 코드 수정 없이 환경변수로 가능하게 둔다.
 const MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
+// 얼굴 분석/추천은 정체성 보존 이슈가 없어 최신 flash를 쓴다.
+const TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || 'gemini-3.6-flash';
 
-const buildPrompt = (style: HairStyle, color?: HairColor) => {
+const FACE_SHAPES = ['oval', 'round', 'square', 'heart', 'long', 'diamond'] as const;
+
+// 얼굴형별 스타일링 보정 지침. 추천 단계에서 받은 얼굴형을 생성 프롬프트에 넘겨
+// 참조 사진을 그대로 베끼는 대신 고객 얼굴에 맞게 조정하도록 만든다.
+const FACE_SHAPE_GUIDANCE: Record<FaceShape, string> = {
+  oval: 'Balanced proportions — the reference style can be followed closely. Keep the natural balance rather than adding corrective volume.',
+  round: 'Add height and volume at the crown, keep the sides closer to the head, and let face-framing pieces fall past the cheeks to lengthen the face. Avoid width at cheek level.',
+  square: 'Soften the strong jawline with face-framing waves and wispy, textured ends around the jaw. Avoid blunt horizontal lines landing exactly at the jaw.',
+  heart: 'Balance the wider forehead with volume and fullness around the jaw and chin. A soft side-swept or see-through fringe helps narrow the forehead.',
+  long: 'Add width and volume at the sides around cheek level and avoid excessive length that lengthens the face further. A fringe shortens the visual face length.',
+  diamond: 'Add volume at the forehead and around the jaw to balance prominent cheekbones. Keep the width at cheek level soft rather than full.',
+};
+
+const isFaceShape = (v: unknown): v is FaceShape =>
+  typeof v === 'string' && (FACE_SHAPES as readonly string[]).includes(v);
+
+// 피부 보정 강도. 세게 밀수록 "예쁘지만 다른 사람"으로 넘어갈 위험이 커지므로
+// 코드 수정 없이 되돌릴 수 있게 환경변수로 뺐다.
+type RetouchLevel = 'subtle' | 'medium' | 'strong';
+
+const RETOUCH_LEVEL: RetouchLevel = (() => {
+  const v = process.env.RETOUCH_LEVEL;
+  return v === 'subtle' || v === 'medium' || v === 'strong' ? v : 'medium';
+})();
+
+const RETOUCH_BLOCKS: Record<RetouchLevel, string> = {
+  subtle: `### Gentle rejuvenation — this IS wanted, but keep it restrained:
+The client should look like the best-rested version of themselves: roughly three to five years younger.
+- Even out the skin tone, reduce redness and blotchiness
+- Soften fine lines and wrinkles — SOFTEN them, do not erase them
+- Reduce dark circles and under-eye shadows
+- Calm down blemishes and acne
+- Leave a healthy natural glow, with real pores and skin texture still visible`,
+
+  medium: `### Rejuvenation and salon finish — this IS wanted:
+The client should look like the best-rested, best-lit version of themselves walking out of a high-end salon: roughly five to eight years younger. Still unmistakably the same person, never a different generation.
+- Even out the skin tone fully, clear redness and blotchiness
+- Clearly soften wrinkles — forehead lines, crow's feet and nasolabial folds should be visibly reduced, but still faintly readable up close
+- Clear dark circles and brighten the under-eye area
+- Remove blemishes, acne and age spots (prominent moles and beauty spots stay)
+- Healthy, luminous, well-hydrated skin that still shows real pores and texture
+- Tidy the hair too: no stray frizz, healthy natural shine, and grey strands restored to their natural younger color unless a grey or silver color was requested
+
+### Make the photograph itself flattering:
+Finish the shot the way a professional salon photographer would. Keep the SAME camera angle, background, framing and lighting DIRECTION as Image 1, but soften and even out the light so it gently defines the cheekbones and jawline, add clean catchlights in the eyes, and lift harsh shadows.
+All of that definition must come from LIGHTING ONLY. Never move, slim or reshape any bone structure to achieve it.`,
+
+  strong: `### Rejuvenation and beauty finish — go clearly further, but never break identity:
+The client should look like a professionally styled, professionally lit beauty portrait of themselves: roughly eight to ten years younger, at their absolute best. Still instantly recognisable as the same individual.
+- Perfectly even, clear skin tone
+- Smooth away wrinkles and folds almost completely, leaving only the faintest trace so the face still moves like a real face
+- Fully clear dark circles, brighten and open up the eye area
+- Remove blemishes, acne, age spots and broken capillaries (prominent moles and beauty spots stay)
+- Radiant, dewy, glass-skin finish — but keep enough pore detail that it still reads as a photograph, not a 3D render
+- Restyle the hair to salon-finished quality: glossy, frizz-free, with grey strands restored to their natural younger color unless a grey or silver color was requested
+
+### Make the photograph itself flattering:
+Finish the shot the way a professional beauty photographer would. Keep the SAME camera angle, background, framing and lighting DIRECTION as Image 1, but relight it softly and flatteringly: sculpt the cheekbones and jawline with light, add clean catchlights in the eyes, lift all harsh shadows.
+All of that definition must come from LIGHTING ONLY. Never move, slim or reshape any bone structure to achieve it.`,
+};
+
+const buildPrompt = (
+  style: HairStyle,
+  color?: HairColor,
+  faceShape?: FaceShape,
+  retouch: RetouchLevel = RETOUCH_LEVEL
+) => {
+  const faceContext = faceShape
+    ? `
+Client face shape: ${faceShape}
+Styling adjustment for this face shape: ${FACE_SHAPE_GUIDANCE[faceShape]}`
+    : '';
+
   const styleContext = `
 The requested hairstyle is "${style.nameKo}" (${style.name}).
 Style characteristics: ${style.description}
 Style keywords: ${style.tags.join(', ')}
-Client gender: ${style.gender === 'female' ? 'Female' : 'Male'}`;
+Client gender: ${style.gender === 'female' ? 'Female' : 'Male'}${faceContext}`;
 
   const colorContext = color
     ? `
@@ -102,10 +176,10 @@ Hair color requested: "${color.nameKo}" (${color.name})
 Color details: ${color.description}`
     : '';
 
-  return `You are a virtual hair stylist AI. Your ONLY job is to change the HAIR on a real person's photo.
+  return `You are a virtual hair stylist AI. You restyle the HAIR on a real person's photo and give their skin a light, natural salon-grade retouch. You never change WHO they are.
 
 ## INPUT
-- Image 1: THE CLIENT — this is the real person. Their face is sacred and must NOT change.
+- Image 1: THE CLIENT — this is the real person. Their facial structure is sacred and must NOT change.
 - Image 2: HAIRSTYLE REFERENCE ONLY — use this ONLY to understand the hair shape, volume, length, and texture. COMPLETELY IGNORE the face/person in Image 2.
 ${styleContext}${colorContext}
 
@@ -115,33 +189,38 @@ If the client's family or friends saw the result, they must instantly say "That'
 
 You are NOT generating a new person. You are NOT blending two faces. You are editing Image 1's hair ONLY.
 
-### What must stay IDENTICAL to Image 1 (zero change allowed):
+### Identity anchors — these must stay IDENTICAL to Image 1 (zero change allowed):
 - Face shape, jawline, chin shape, cheekbone structure
 - Eyes: exact shape, size, spacing, eyelid type (monolid/double), eye color
 - Nose: exact shape, width, bridge height, nostril shape
 - Lips: exact shape, thickness, lip line
 - Eyebrows: exact shape, thickness, arch
-- Skin: exact tone, texture, wrinkles, moles, freckles, blemishes — keep ALL of them
 - Ears: exact shape and position
 - Neck and shoulders: exact proportions
+- Skin color and undertone — you may even it out, but never lighten or shift the tone
+- Distinctive permanent marks: prominent moles, beauty spots and scars stay, they are part of who this person is
 - Facial expression: keep the same or neutral
-- Apparent age: must look the same age as in Image 1 (do NOT make them look younger or older)
+
+${RETOUCH_BLOCKS[retouch]}
+
+If the retouching ever starts to change WHO the person is, stop and keep the original. Identity always wins over beauty — a flawless stranger is a failed result.
 
 ### What you MUST NOT do:
 - Do NOT use ANY facial features from Image 2 (the hairstyle reference)
-- Do NOT smooth, filter, or beautify the skin
 - Do NOT reshape the face, slim the jaw, enlarge the eyes, or alter any feature
-- Do NOT change the skin tone or skin color
-- Do NOT remove wrinkles, dark circles, moles, scars, or any skin detail
-- Do NOT make the person look younger or more attractive — preserve their real appearance
+- Do NOT change the skin color, undertone, or ethnicity
+- Do NOT apply a heavy beauty filter or airbrushed, plastic, doll-like skin
+- Do NOT erase all pores and texture — the result must still read as a real photograph
+- Do NOT turn an adult into a teenager or shift the client's apparent generation
 - Do NOT blend or morph the two faces together in any way
 
 ## HAIR EDITING INSTRUCTIONS
 
-### What to change (ONLY the hair):
+### What to change:
 1. Remove/replace the client's current hair with the hairstyle shown in Image 2
-2. Match the hair's shape, layering, volume, curl pattern, and length from Image 2
-3. Adapt the hairstyle naturally to the client's head shape and face proportions
+2. Take Image 2 as the DIRECTION — its shape, layering, volume, curl pattern and length — NOT as a template to copy strand for strand
+3. Adapt that style to THIS client the way a real salon director would: tune the length, where the volume sits, the parting and the face-framing pieces so the cut genuinely flatters their face shape, head size and proportions${faceShape ? '. Follow the styling adjustment given for their face shape above' : ''}
+4. The finished cut must look like it was cut FOR this person, not pasted on from someone else's photo
 
 ### Natural hair integration:
 - Hairline must match the client's ORIGINAL hairline from Image 1
@@ -155,12 +234,12 @@ ${color ? `- Apply the requested color "${color.nameKo}": ${color.description}
 
 ## PHOTO QUALITY
 - Keep the SAME camera angle, background, and framing as Image 1
-- Match lighting direction and intensity from Image 1
+- Keep the same lighting DIRECTION as Image 1 (you may soften and even out the light as described above)
 - Photorealistic, sharp, high-resolution output
 - The result should look like the client simply got a new haircut at a salon
 
 ## OUTPUT
-1. Generate exactly ONE photorealistic image. No text, no watermarks, no collages. Just the client — the SAME person from Image 1 — with only their hair changed.
+1. Generate exactly ONE photorealistic image. No text, no watermarks, no collages. Just the client — unmistakably the SAME person from Image 1 — with the new hairstyle and lightly refreshed skin.
 2. After the image, write a short stylist comment in Korean (2-3 sentences).
    - Write as a warm, professional salon director ("원장") speaking directly to the client.
    - Mention the specific hairstyle name and explain WHY this style suits the client's face shape, features, or vibe.
@@ -170,6 +249,98 @@ ${color ? `- Apply the requested color "${color.nameKo}": ${color.description}
 };
 
 const USER_IMAGE_PATTERN = /^data:(image\/(?:png|jpeg|jpg|webp));base64,([A-Za-z0-9+/=]+)$/;
+
+const RECOMMEND_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    faceShape: { type: Type.STRING, enum: [...FACE_SHAPES] },
+    faceNote: {
+      type: Type.STRING,
+      description: 'One short Korean sentence describing the face shape and features, addressed to the client.',
+    },
+    recommendations: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          styleId: { type: Type.STRING, description: 'Must be one of the ids from the catalogue.' },
+          reason: {
+            type: Type.STRING,
+            description: 'One short Korean sentence on why this style suits the client.',
+          },
+        },
+        required: ['styleId', 'reason'],
+      },
+    },
+  },
+  required: ['faceShape', 'faceNote', 'recommendations'],
+};
+
+const buildRecommendPrompt = (catalogue: HairStyle[]) => `You are an experienced Korean salon director recommending haircuts.
+
+Look at the client's photo and work out their face shape, features and overall vibe. Then pick the THREE styles from the catalogue below that would genuinely suit them best.
+
+## CATALOGUE (you may ONLY recommend ids from this list)
+${catalogue.map(s => `- ${s.id}: ${s.nameKo} (${s.category === 'cut' ? '컷' : '펌'}) — ${s.description} [${s.tags.join(', ')}]`).join('\n')}
+
+## RULES
+- Recommend exactly three styles, best match first, and never repeat an id.
+- Base the choice on the client's actual face shape, proportions and features — not on which styles are generally popular.
+- Write "reason" and "faceNote" in warm, natural, conversational Korean, as if speaking directly to the client. One sentence each.
+- Do NOT use hashtags, emojis, or English words in the Korean text.
+- Do NOT comment on the client's attractiveness, weight, age, or anything unrelated to hair and face shape.`;
+
+const handleRecommend = async (
+  res: ServerResponse,
+  apiKey: string,
+  userImage: RegExpMatchArray,
+  styles: HairStyle[],
+  gender: unknown
+) => {
+  const catalogue = styles.filter(s => s.gender === (gender === 'male' ? 'male' : 'female'));
+
+  const response = await getClient(apiKey).models.generateContent({
+    model: TEXT_MODEL,
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { inlineData: { mimeType: userImage[1], data: userImage[2] } },
+          { text: buildRecommendPrompt(catalogue) },
+        ],
+      },
+    ],
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: RECOMMEND_SCHEMA,
+    },
+  });
+
+  const parsed = JSON.parse(response.text || '{}');
+
+  // 모델이 카탈로그에 없는 id를 지어낼 수 있으므로 서버에서 걸러낸다.
+  const seen = new Set<string>();
+  const recommendations = (parsed.recommendations || [])
+    .filter((r: { styleId?: string }) => {
+      if (!r?.styleId || seen.has(r.styleId)) return false;
+      if (!catalogue.some(s => s.id === r.styleId)) return false;
+      seen.add(r.styleId);
+      return true;
+    })
+    .slice(0, 3);
+
+  if (!recommendations.length) {
+    console.error('Recommendation returned no usable style ids:', response.text);
+    sendJson(res, 502, { error: '추천을 만들지 못했습니다.' });
+    return;
+  }
+
+  sendJson(res, 200, {
+    faceShape: isFaceShape(parsed.faceShape) ? parsed.faceShape : null,
+    faceNote: typeof parsed.faceNote === 'string' ? parsed.faceNote : '',
+    recommendations,
+  });
+};
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'POST') {
@@ -184,7 +355,14 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
-  let body: { userImage?: unknown; styleId?: unknown; colorId?: unknown };
+  let body: {
+    action?: unknown;
+    userImage?: unknown;
+    styleId?: unknown;
+    colorId?: unknown;
+    gender?: unknown;
+    faceShape?: unknown;
+  };
   try {
     body = (await readBody(req)) as typeof body;
   } catch (err) {
@@ -211,6 +389,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
+  if (body.action === 'recommend') {
+    try {
+      await handleRecommend(res, apiKey, userImageMatch, data.styles, body.gender);
+    } catch (err) {
+      console.error('Recommendation failed:', err);
+      sendJson(res, 500, { error: '추천에 실패했습니다.' });
+    }
+    return;
+  }
+
   const style = data.styles.find(s => s.id === body.styleId);
   if (!style) {
     sendJson(res, 400, { error: 'Unknown "styleId".' });
@@ -233,7 +421,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           parts: [
             { inlineData: { mimeType: userImageMatch[1], data: userImageMatch[2] } },
             { inlineData: { mimeType: styleImage.mimeType, data: styleImage.data } },
-            { text: buildPrompt(style, color) },
+            // faceShape는 고정 목록으로 검증한 값만 쓴다. 클라이언트가 보낸 자유 문자열이
+            // 프롬프트에 그대로 섞이지 않도록 하기 위함이다.
+            { text: buildPrompt(style, color, isFaceShape(body.faceShape) ? body.faceShape : undefined) },
           ],
         },
       ],

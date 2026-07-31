@@ -34,3 +34,16 @@ export interface GeneratedImageResult {
   originalImage: string;
   generatedImage: string;
 }
+
+export type FaceShape = 'oval' | 'round' | 'square' | 'heart' | 'long' | 'diamond';
+
+export interface StyleRecommendation {
+  styleId: string;
+  reason: string;        // 이 스타일이 어울리는 이유 (한국어 한 문장)
+}
+
+export interface RecommendResult {
+  faceShape: FaceShape | null;
+  faceNote: string;      // 얼굴형/특징 요약 (한국어 한 문장)
+  recommendations: StyleRecommendation[];
+}
