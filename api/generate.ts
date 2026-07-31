@@ -86,6 +86,9 @@ const loadStyleImage = async (style: HairStyle) => {
   return { mimeType, data: data.toString('base64') };
 };
 
+// 모델 교체는 코드 수정 없이 환경변수로 가능하게 둔다.
+const MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
+
 const buildPrompt = (style: HairStyle, color?: HairColor) => {
   const styleContext = `
 The requested hairstyle is "${style.nameKo}" (${style.name}).
@@ -223,7 +226,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   try {
     const styleImage = await loadStyleImage(style);
     const response = await getClient(apiKey).models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: MODEL,
       contents: [
         {
           role: 'user',
