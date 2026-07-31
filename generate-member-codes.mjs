@@ -8,6 +8,7 @@ import { writeFile } from 'fs/promises';
 // 헷갈리는 글자(0/O, 1/I/L)는 뺐다. 전화나 종이로 불러주는 상황을 고려한 것.
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const OUT_FILE = 'member-codes.local';
+const CSV_FILE = 'member-codes.local.csv';
 
 const count = Number(process.argv[2]) || 20;
 if (!Number.isInteger(count) || count < 1 || count > 2000) {
@@ -38,5 +39,19 @@ await writeFile(
   'utf8'
 );
 
-console.log(`${list.length}개 발급 완료 -> ${OUT_FILE}`);
-console.log('이 파일을 열어 코드를 배포하고, 마지막 줄을 MEMBER_CODES 환경변수에 넣으세요.');
+// 누구에게 어느 코드를 줬는지 기록할 명단. 엑셀에서 바로 열 수 있게 CSV로 쓴다.
+// 한글이 깨지지 않도록 BOM을 붙인다(엑셀이 없으면 ANSI로 읽어버린다).
+await writeFile(
+  CSV_FILE,
+  '﻿' +
+    ['번호,발급코드,회원명,연락처,발급일,비고', ...list.map((c, i) => `${i + 1},${c},,,,`)].join(
+      '\r\n'
+    ) +
+    '\r\n',
+  'utf8'
+);
+
+console.log(`${list.length}개 발급 완료`);
+console.log(`  ${OUT_FILE}     - 코드 목록 + MEMBER_CODES 환경변수 값`);
+console.log(`  ${CSV_FILE} - 회원 명단 (엑셀로 열어서 이름을 채우세요)`);
+console.log('두 파일 모두 커밋되지 않습니다. 명단 파일은 반드시 백업해 두세요.');
