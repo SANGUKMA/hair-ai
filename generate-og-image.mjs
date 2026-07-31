@@ -77,7 +77,8 @@ const overlay = Buffer.from(`
         fill="none" stroke="#EC4899" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`);
 
-const outFile = path.join('public', 'og-image.png');
+// JPEG로 낸다. 카카오톡 등 크롤러가 큰 PNG에서 실패하는 경우가 있어 용량을 줄이는 쪽이 안전하다.
+const outFile = path.join('public', 'og-image.jpg');
 
 await sharp({ create: { width: W, height: H, channels: 3, background: '#0B0910' } })
   .composite([
@@ -85,7 +86,7 @@ await sharp({ create: { width: W, height: H, channels: 3, background: '#0B0910' 
     { input: rightPanel, left: HALF, top: 0 },
     { input: overlay, left: 0, top: 0 },
   ])
-  .png({ quality: 90, compressionLevel: 9 })
+  .jpeg({ quality: 88, mozjpeg: true })
   .toFile(outFile);
 
 const { size } = await sharp(outFile).metadata().then(async m => ({ ...m, size: (await import('fs')).statSync(outFile).size }));
