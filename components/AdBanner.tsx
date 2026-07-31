@@ -20,21 +20,13 @@ export const AdBanner: React.FC = () => {
 
         {/* Content */}
         <div className="relative z-10 flex items-center gap-4">
-          {/* Product Icons */}
-          <div className="flex -space-x-3 shrink-0">
-            {/* O-Balance bottle */}
-            <div className="w-14 h-20 bg-gradient-to-b from-gray-100 to-gray-200 rounded-lg shadow-md border border-white/60 flex flex-col items-center justify-center relative">
-              <div className="w-5 h-2 bg-gray-300 rounded-t-sm -mt-1 mb-0.5" />
-              <span className="text-yellow-700 font-bold text-lg leading-none">O</span>
-              <span className="text-[6px] text-gray-500 font-semibold mt-0.5">BALANCE</span>
-            </div>
-            {/* C-Clear bottle */}
-            <div className="w-14 h-20 bg-gradient-to-b from-gray-100 to-gray-200 rounded-lg shadow-md border border-white/60 flex flex-col items-center justify-center relative z-10">
-              <div className="w-5 h-2 bg-gray-300 rounded-t-sm -mt-1 mb-0.5" />
-              <span className="text-red-500 font-bold text-lg leading-none">C</span>
-              <span className="text-[6px] text-gray-500 font-semibold mt-0.5">CLEAR</span>
-            </div>
-          </div>
+          {/* Product photo. 세로 비율(0.596)에 맞춰 미리 잘라둔 이미지라 높이만 지정한다. */}
+          <img
+            src="/ad-olivetta.jpg"
+            alt="올리베타 O-밸런스와 C-클리어 헤어&바디 올인원 세트"
+            className="h-28 w-auto shrink-0 rounded-xl border border-white/60 shadow-md"
+            loading="lazy"
+          />
 
           {/* Text Content */}
           <div className="flex-1 min-w-0">
