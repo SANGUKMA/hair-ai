@@ -6,6 +6,8 @@ interface ResultViewerProps {
   originalImage: string;
   generatedImage: string;
   stylistComment?: string;
+  // 서버가 결과를 동일인으로 확신하지 못했다. 결과는 보여주되 그대로 믿지 않도록 알린다.
+  identityWarning?: boolean;
   adjustments: StyleAdjustments;
   onAdjustmentsChange: (next: StyleAdjustments) => void;
   showCurl: boolean;
@@ -21,6 +23,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
   originalImage,
   generatedImage,
   stylistComment,
+  identityWarning,
   adjustments,
   onAdjustmentsChange,
   showCurl,
@@ -59,6 +62,18 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
 
   return (
     <div className="flex flex-col w-full max-w-lg mx-auto">
+      {identityWarning && (
+        <div className="mb-3 mx-1 rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <p className="text-xs font-bold text-amber-800 mb-0.5">
+            얼굴이 원본과 다르게 나왔을 수 있어요
+          </p>
+          <p className="text-[11px] text-amber-700 leading-relaxed">
+            아래 다시 만들기를 누르면 한 번 더 시도합니다. 계속 비슷하다면 정면이 잘 보이는
+            밝은 사진으로 바꿔보세요. 스타일과 컬러는 그대로 참고하셔도 좋습니다.
+          </p>
+        </div>
+      )}
+
       {/* Image comparison container with fixed aspect ratio */}
       <div
         ref={containerRef}

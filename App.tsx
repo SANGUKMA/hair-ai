@@ -45,6 +45,7 @@ const App: React.FC = () => {
   // 칩을 누르는 건 공짜고, 생성은 버튼을 눌렀을 때 한 번만 일어난다.
   const [adjustments, setAdjustments] = useState<StyleAdjustments>(NO_ADJUSTMENTS);
   const [appliedAdjustments, setAppliedAdjustments] = useState<StyleAdjustments>(NO_ADJUSTMENTS);
+  const [identityWarning, setIdentityWarning] = useState(false);
 
   const [recommendation, setRecommendation] = useState<RecommendResult | null>(null);
   const [isRecommending, setIsRecommending] = useState(false);
@@ -116,6 +117,7 @@ const App: React.FC = () => {
       );
       setResultImage(result.image);
       setStylistComment(result.comment);
+      setIdentityWarning(Boolean(result.identityWarning));
       setAppliedAdjustments(adjustments);
       setStep(AppStep.RESULT);
     } catch (err) {
@@ -142,6 +144,7 @@ const App: React.FC = () => {
     setStep(AppStep.HOME);
     setResultImage(null);
     setStylistComment('');
+    setIdentityWarning(false);
     setSelectedStyle(null);
     setAdjustments(NO_ADJUSTMENTS);
     setAppliedAdjustments(NO_ADJUSTMENTS);
@@ -152,6 +155,7 @@ const App: React.FC = () => {
     setStep(AppStep.HOME);
     setResultImage(null);
     setStylistComment('');
+    setIdentityWarning(false);
     setUserImage(null);
     setSelectedStyle(null);
     setAdjustments(NO_ADJUSTMENTS);
@@ -413,6 +417,7 @@ const App: React.FC = () => {
               originalImage={userImage}
               generatedImage={resultImage}
               stylistComment={stylistComment}
+              identityWarning={identityWarning}
               adjustments={adjustments}
               onAdjustmentsChange={setAdjustments}
               showCurl={selectedStyle?.category === 'perm'}

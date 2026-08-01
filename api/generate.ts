@@ -412,6 +412,179 @@ ${color ? `- Apply the requested color "${color.nameKo}": ${color.description}
 
 const USER_IMAGE_PATTERN = /^data:(image\/(?:png|jpeg|jpg|webp));base64,([A-Za-z0-9+/=]+)$/;
 
+type InlineImage = { mimeType: string; data: string };
+
+const generateImage = async (
+  apiKey: string,
+  userImage: InlineImage,
+  styleImage: InlineImage,
+  prompt: string
+): Promise<{ image: string; comment: string; inline: InlineImage } | null> => {
+  const response = await getClient(apiKey).models.generateContent({
+    model: MODEL,
+    contents: [
+      {
+        role: 'user',
+        parts: [{ inlineData: userImage }, { inlineData: styleImage }, { text: prompt }],
+      },
+    ],
+    config: {
+      responseModalities: ['IMAGE', 'TEXT'],
+    },
+  });
+
+  const parts = response.candidates?.[0]?.content?.parts;
+  let inline: InlineImage | null = null;
+  let comment = '';
+
+  for (const part of parts || []) {
+    if (part.inlineData?.data) {
+      inline = { mimeType: part.inlineData.mimeType || 'image/png', data: part.inlineData.data };
+    } else if (part.text) {
+      comment += part.text;
+    }
+  }
+
+  if (!inline) {
+    console.error(
+      'No image in Gemini response. finishReason:',
+      response.candidates?.[0]?.finishReason
+    );
+    return null;
+  }
+
+  return { image: `data:${inline.mimeType};base64,${inline.data}`, comment: comment.trim(), inline };
+};
+
+// ── 동일인 검증 ──────────────────────────────────────────────────────────────
+// 프롬프트로 정체성 보존을 아무리 강하게 요구해도 실패는 일어난다. 실패한 결과가
+// 그대로 회원에게 나가면 "예쁘지만 다른 사람"이 되어 신뢰를 잃는다. 생성한 뒤
+// 원본과 결과를 다시 모델에 넣어 같은 사람인지 판정하고, 아니면 한 번 다시 만든다.
+// 판정 로그는 모델별 통과율을 쌓아 provider 결정을 감이 아니라 숫자로 만드는 근거이기도 하다.
+const IDENTITY_CHECK = process.env.IDENTITY_CHECK !== 'off';
+
+// 판정에는 추천용 flash가 아니라 pro를 쓴다. flash는 같은 성별·연령대의 다른 얼굴을
+// 통과시켜 버렸다. 실측으로 flash는 5개 중 2개, pro는 5개 전부를 맞혔다.
+// 판정 실패는 곧 "다른 사람 사진을 회원에게 보여주는 것"이라 여기서는 비용보다 정확도다.
+const IDENTITY_MODEL = process.env.IDENTITY_MODEL || 'gemini-3.1-pro-preview';
+
+// 실패해도 자동 재생성은 하지 않는다. 생성 20초 + 판정 10초라, 재생성까지 하면
+// 최악의 경우 63초로 함수 제한(60초)을 넘긴다. 타임아웃은 회원에게 아무것도 주지
+// 못하므로 경고를 붙여 내보내는 것보다 나쁘다. 다시 만들기는 결과 화면 버튼으로 한다.
+
+type IdentityVerdict = 'same' | 'uncertain' | 'different';
+
+// 총평 하나만 물으면 "인상이 비슷하다"로 통과시켜 버린다. 부위별로 따로 답하게 만들어
+// 대충 넘어가는 길을 막고, 최종 판정은 그 답들로 서버가 계산한다.
+const FEATURE_MATCHES = ['match', 'drifted', 'different'] as const;
+type FeatureMatch = (typeof FEATURE_MATCHES)[number];
+const isFeatureMatch = oneOf(FEATURE_MATCHES);
+const IDENTITY_FEATURES = ['eyes', 'nose', 'mouth', 'faceStructure'] as const;
+
+const featureProperty = (what: string) => ({
+  type: Type.STRING,
+  enum: [...FEATURE_MATCHES],
+  description: `Whether ${what} is the same person's: "match", "drifted" or "different".`,
+});
+
+const IDENTITY_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    eyes: featureProperty('the eye shape, size, spacing and eyelid type'),
+    nose: featureProperty('the nose bridge, width, tip and nostril shape'),
+    mouth: featureProperty('the mouth width and lip shape'),
+    faceStructure: featureProperty('the jawline, chin, cheekbones and face width-to-length ratio'),
+    reason: {
+      type: Type.STRING,
+      description:
+        'One short English sentence naming the specific evidence. Read by the operator in logs, never by the client.',
+    },
+  },
+  required: ['eyes', 'nose', 'mouth', 'faceStructure', 'reason'],
+};
+
+const IDENTITY_PROMPT = `You are checking whether a hair simulation kept the client's identity.
+
+- Image 1: the client's original photo.
+- Image 2: the simulation result.
+
+## CHANGES THAT ARE INTENDED — never treat these as a different person
+- The hair: a completely different cut, length, colour and texture is the entire point of the tool
+- Skin retouching: evened skin tone, softened wrinkles, brightened under-eyes, cleared blemishes
+- The client looking several years younger and better rested
+- Softer, more flattering lighting, and a cleaner, sharper photograph
+
+## THE FAILURE YOU ARE LOOKING FOR
+It is almost never a wildly different face. It is the client's face quietly replaced by a
+generically attractive one of the same gender, age and ethnicity, lit and styled the same way.
+Two people of the same type are still two people. SIMILAR IS NOT THE SAME.
+A matching overall impression is not evidence. Compare the features one at a time and answer
+from what you can actually measure against each other — proportions, ratios, and shapes.
+
+## WHAT YOU ARE JUDGING, FEATURE BY FEATURE
+Answer each of these separately, using only what a haircut and a retouch cannot change:
+- eyes: shape, size, spacing, eyelid type
+- nose: bridge height, width, tip, nostril shape
+- mouth: width and lip shape, including lip thickness
+- faceStructure: jawline, chin, cheekbones, and the width-to-length ratio of the face
+
+For each one answer:
+- "match": the same person's, allowing for retouching
+- "drifted": recognisably close, but the shape or proportion has visibly moved
+- "different": not the same person's feature
+
+Be strict about shape and proportion. Be permissive about skin, apparent age, lighting and hair.
+A difference that a haircut, make-up, retouching or better lighting fully explains is a "match".`;
+
+export const verifyIdentity = async (
+  apiKey: string,
+  original: InlineImage,
+  generated: InlineImage
+): Promise<IdentityVerdict> => {
+  try {
+    const response = await getClient(apiKey).models.generateContent({
+      model: IDENTITY_MODEL,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { inlineData: original },
+            { inlineData: generated },
+            { text: IDENTITY_PROMPT },
+          ],
+        },
+      ],
+      config: { responseMimeType: 'application/json', responseSchema: IDENTITY_SCHEMA },
+    });
+
+    const parsed = JSON.parse(response.text || '{}');
+
+    // 판정은 서버가 계산한다. 모델에게 총평을 맡기면 부위별로 어긋난 걸 보고도
+    // "전체적으로 비슷하다"로 통과시킨다.
+    const features: FeatureMatch[] = IDENTITY_FEATURES.map(key =>
+      isFeatureMatch(parsed[key]) ? parsed[key] : 'match'
+    );
+    const drifted = features.filter(f => f === 'drifted').length;
+    const mismatched = features.filter(f => f === 'different').length;
+
+    // 한 부위라도 남의 것이거나 두 부위 이상 흔들렸으면 얼굴이 바뀐 것으로 본다.
+    // 한 부위만 흔들린 건 보정으로도 생기므로 통과시킨다.
+    const verdict: IdentityVerdict =
+      mismatched > 0 || drifted >= 2 ? 'different' : drifted === 1 ? 'uncertain' : 'same';
+
+    console.log(
+      `[identity] image=${MODEL} judge=${IDENTITY_MODEL} verdict=${verdict} ` +
+        IDENTITY_FEATURES.map((key, i) => `${key}=${features[i]}`).join(' ') +
+        ` reason=${JSON.stringify(parsed.reason || '')}`
+    );
+    return verdict;
+  } catch (err) {
+    // 검증이 실패했다고 멀쩡할지도 모르는 생성 결과를 버릴 수는 없다. 통과로 보고 넘어간다.
+    console.error('Identity check failed:', err);
+    return 'uncertain';
+  }
+};
+
 const RECOMMEND_SCHEMA = {
   type: Type.OBJECT,
   properties: {
@@ -740,45 +913,21 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   try {
     const styleImage = await loadStyleImage(style);
-    const response = await getClient(apiKey).models.generateContent({
-      model: MODEL,
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { inlineData: { mimeType: userImageMatch[1], data: userImageMatch[2] } },
-            { inlineData: { mimeType: styleImage.mimeType, data: styleImage.data } },
-            { text: buildPrompt(style, color, diagnosis, adjustments) },
-          ],
-        },
-      ],
-      config: {
-        responseModalities: ['IMAGE', 'TEXT'],
-      },
-    });
+    const prompt = buildPrompt(style, color, diagnosis, adjustments);
+    const original: InlineImage = { mimeType: userImageMatch[1], data: userImageMatch[2] };
 
-    const parts = response.candidates?.[0]?.content?.parts;
-    let image: string | null = null;
-    let comment = '';
-
-    for (const part of parts || []) {
-      if (part.inlineData?.data) {
-        image = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
-      } else if (part.text) {
-        comment += part.text;
-      }
-    }
-
-    if (!image) {
-      console.error(
-        'No image in Gemini response. finishReason:',
-        response.candidates?.[0]?.finishReason
-      );
+    const result = await generateImage(apiKey, original, styleImage, prompt);
+    if (!result) {
       sendJson(res, 502, { error: '이미지를 생성하지 못했습니다.' });
       return;
     }
 
-    sendJson(res, 200, { image, comment: comment.trim() });
+    // 'uncertain'은 피부 보정만으로도 흔하게 나온다. 확실히 다른 사람일 때만 알린다.
+    const identityWarning = IDENTITY_CHECK
+      ? (await verifyIdentity(apiKey, original, result.inline)) === 'different'
+      : false;
+
+    sendJson(res, 200, { image: result.image, comment: result.comment, identityWarning });
   } catch (err) {
     console.error('Hairstyle generation failed:', err);
     sendJson(res, 500, { error: '헤어스타일 생성에 실패했습니다.' });

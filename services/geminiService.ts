@@ -4,6 +4,8 @@ import { clearAccessCode, getAccessCode } from '../utils/accessCode';
 export interface GenerateResult {
   image: string;
   comment: string;
+  // 서버가 결과를 동일인으로 확신하지 못한 경우. 결과는 그대로 오되 화면에서 알린다.
+  identityWarning?: boolean;
 }
 
 // 코드가 거부되면 저장된 값을 지워 다시 입력받도록 한다.
