@@ -27,6 +27,13 @@ import {
 } from './types';
 import { ConsultQuestions } from './components/ConsultQuestions';
 import { deliverImage, renderReport } from './utils/report';
+import { RecentStyles } from './components/RecentStyles';
+import {
+  HistoryEntry,
+  addHistoryEntry,
+  loadHistory,
+  removeHistoryEntry,
+} from './utils/history';
 import { hairstyles } from './data/hairstyles';
 import { hairColors } from './data/hairColors';
 
@@ -52,6 +59,7 @@ const App: React.FC = () => {
   const [appliedAdjustments, setAppliedAdjustments] = useState<StyleAdjustments>(NO_ADJUSTMENTS);
   const [identityWarning, setIdentityWarning] = useState(false);
   const [isSavingReport, setIsSavingReport] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
 
   // 상담 답변도 같은 방식이다. 고치는 건 공짜고, 다시 추천받을지는 회원이 정한다.
   const [consult, setConsult] = useState<ConsultAnswers>(NO_CONSULT);
@@ -106,6 +114,27 @@ const App: React.FC = () => {
     if (userImage) requestRecommendation(userImage, next, consult);
   };
 
+  // 지난 기록에서 고르면 그때 쓴 스타일과 컬러를 그대로 다시 세팅한다.
+  const handleHistoryPick = (entry: HistoryEntry) => {
+    const style = hairstyles.find(s => s.id === entry.styleId);
+    if (!style) return;
+
+    if (style.gender !== gender) {
+      setGender(style.gender);
+      // 성별이 바뀌면 추천도 그 기준으로 받아야 카드와 아래 그리드가 어긋나지 않는다.
+      // 성별별 캐시가 있어 이미 받아본 성별이면 호출이 일어나지 않는다.
+      if (userImage) requestRecommendation(userImage, style.gender, consult);
+    }
+    setStyleCategory(style.category);
+    setSelectedStyle(style);
+
+    const color = entry.colorId ? hairColors.find(c => c.id === entry.colorId) : null;
+    if (color) {
+      setSelectedColor(color);
+      setColorCategory(color.category);
+    }
+  };
+
   // 답변이 바뀌면 성별별로 캐시해 둔 이전 추천은 전부 무효다.
   const handleRerecommend = () => {
     if (!userImage) return;
@@ -142,6 +171,17 @@ const App: React.FC = () => {
       setIdentityWarning(Boolean(result.identityWarning));
       setAppliedAdjustments(adjustments);
       setStep(AppStep.RESULT);
+
+      // 기록은 부가 기능이다. 저장이 막혀 있어도 결과 화면을 막지 않는다.
+      addHistoryEntry({
+        resultImage: result.image,
+        styleId: selectedStyle.id,
+        styleName: selectedStyle.nameKo,
+        colorId: selectedColor && selectedColor.id !== 'natural' ? selectedColor.id : null,
+        colorName: selectedColor && selectedColor.id !== 'natural' ? selectedColor.nameKo : null,
+      })
+        .then(setHistory)
+        .catch(err => console.error('기록 저장 실패:', err));
     } catch (err) {
       console.error(err);
       if (err instanceof AccessDeniedError) {
@@ -250,6 +290,12 @@ const App: React.FC = () => {
       <main className="flex-1 max-w-lg w-full mx-auto p-4 pb-28 flex flex-col">
         {step === AppStep.HOME && (
           <div className="flex flex-col animate-fade-in">
+            <RecentStyles
+              entries={history}
+              onPick={handleHistoryPick}
+              onRemove={id => setHistory(removeHistoryEntry(id))}
+            />
+
             {/* Step 1: User Photo */}
             <div className="mb-5">
               <p className="text-xs font-bold text-gray-700 mb-2 ml-1 uppercase tracking-wider">Step 1. 내 사진 업로드</p>
