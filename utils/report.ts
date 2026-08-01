@@ -16,7 +16,7 @@ import {
   STYLE_UPKEEP_LABEL,
   STYLING_TIME_LABEL,
 } from '../data/labels';
-import { salon, salonContactLine } from './salon';
+import { SalonInfo, salonContactLine } from './salon';
 
 export interface ReportData {
   originalImage: string;
@@ -29,6 +29,8 @@ export interface ReportData {
   stylistComment: string;
   consult: ConsultAnswers;
   identityWarning: boolean;
+  // 원장님마다 다르므로 값으로 받는다. 리포트를 그리는 쪽이 저장소를 알 필요는 없다.
+  salon: SalonInfo;
 }
 
 const W = 1080;
@@ -279,7 +281,7 @@ export const renderReport = async (data: ReportData): Promise<string> => {
   // ── 헤더 ──────────────────────────────────────────────────────────
   ctx.fillStyle = PURPLE;
   ctx.font = font(800, 40);
-  ctx.fillText(salon.name, PAD, y + 36, CONTENT - 200);
+  ctx.fillText(data.salon.name, PAD, y + 36, CONTENT - 200);
   ctx.fillStyle = FAINT;
   ctx.font = font(600, 24);
   const dateText = today();
@@ -565,10 +567,10 @@ export const renderReport = async (data: ReportData): Promise<string> => {
     fillRoundRect(ctx, PAD, y, CONTENT, barH, 20, '#111827');
     ctx.fillStyle = '#ffffff';
     ctx.font = font(700, 26);
-    ctx.fillText(salon.name, PAD + 24, y + 40, CONTENT - 48);
+    ctx.fillText(data.salon.name, PAD + 24, y + 40, CONTENT - 48);
     ctx.fillStyle = '#9ca3af';
     ctx.font = font(500, 20);
-    ctx.fillText(salonContactLine(), PAD + 24, y + 68, CONTENT - 48);
+    ctx.fillText(salonContactLine(data.salon), PAD + 24, y + 68, CONTENT - 48);
     y += barH;
   }
 

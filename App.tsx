@@ -29,6 +29,8 @@ import {
 import { ConsultQuestions } from './components/ConsultQuestions';
 import { deliverImage, renderReport } from './utils/report';
 import { RecentStyles } from './components/RecentStyles';
+import { SalonSettings } from './components/SalonSettings';
+import { SalonInfo, isSalonConfigured, loadSalon } from './utils/salon';
 import {
   HistoryEntry,
   addHistoryEntry,
@@ -61,6 +63,10 @@ const App: React.FC = () => {
   const [identityWarning, setIdentityWarning] = useState(false);
   const [isSavingReport, setIsSavingReport] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
+
+  // 살롱 정보는 원장님마다 다르므로 이 기기에 저장된 값을 쓴다.
+  const [salon, setSalon] = useState<SalonInfo>(() => loadSalon());
+  const [showSalonSettings, setShowSalonSettings] = useState(false);
 
   // 상담 답변도 같은 방식이다. 고치는 건 공짜고, 다시 추천받을지는 회원이 정한다.
   const [consult, setConsult] = useState<ConsultAnswers>(NO_CONSULT);
@@ -256,6 +262,7 @@ const App: React.FC = () => {
         stylistComment,
         consult,
         identityWarning,
+        salon,
       });
       await deliverImage(report, `hairfit-report-${Date.now()}.jpg`);
     } catch (err) {
@@ -289,11 +296,32 @@ const App: React.FC = () => {
           onClose={() => setShowCamera(false)}
         />
       )}
-      <Header />
+      <Header onOpenSettings={() => setShowSalonSettings(true)} />
+
+      {showSalonSettings && (
+        <SalonSettings
+          info={salon}
+          onSaved={setSalon}
+          onClose={() => setShowSalonSettings(false)}
+        />
+      )}
 
       <main className="flex-1 max-w-lg w-full mx-auto p-4 pb-28 flex flex-col">
         {step === AppStep.HOME && (
           <div className="flex flex-col animate-fade-in">
+            {/* 살롱 이름을 안 넣으면 리포트가 기본 문구로 나간다. 넣는 순간 사라진다. */}
+            {!isSalonConfigured(salon) && (
+              <button
+                onClick={() => setShowSalonSettings(true)}
+                className="mb-5 w-full text-left rounded-2xl border border-purple-200 bg-purple-50 p-3.5 hover:bg-purple-100 transition-colors"
+              >
+                <p className="text-xs font-bold text-purple-800">우리 살롱 정보를 등록해주세요</p>
+                <p className="text-[11px] text-purple-600 leading-relaxed mt-0.5">
+                  고객님께 드리는 리포트에 살롱 이름과 연락처가 들어갑니다. 한 번만 입력하면 됩니다.
+                </p>
+              </button>
+            )}
+
             <RecentStyles
               entries={history}
               onPick={handleHistoryPick}
