@@ -6,6 +6,7 @@ import { ResultViewer } from './components/ResultViewer';
 import { ColorSelector } from './components/ColorSelector';
 import { AdBanner } from './components/AdBanner';
 import { StyleRecommendation } from './components/StyleRecommendation';
+import { ColorRecommendation } from './components/ColorRecommendation';
 import { AccessGate } from './components/AccessGate';
 import { InstallHint } from './components/InstallHint';
 import { AccessDeniedError, generateHairstyle, recommendStyles } from './services/geminiService';
@@ -28,6 +29,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [gender, setGender] = useState<Gender>('female');
   const [styleCategory, setStyleCategory] = useState<StyleCategory>('cut');
+  const [colorCategory, setColorCategory] = useState<string>('natural');
 
   const [recommendation, setRecommendation] = useState<RecommendResult | null>(null);
   const [isRecommending, setIsRecommending] = useState(false);
@@ -36,6 +38,7 @@ const App: React.FC = () => {
 
   const filtered = hairstyles.filter(s => s.gender === gender && s.category === styleCategory);
   const recommendedIds = new Set(recommendation?.recommendations.map(r => r.styleId));
+  const recommendedColorIds = new Set(recommendation?.colorRecommendations?.map(r => r.colorId));
 
   const requestRecommendation = useCallback(async (image: string, target: Gender) => {
     const cached = recommendCache.current.get(target);
@@ -78,6 +81,12 @@ const App: React.FC = () => {
     setStyleCategory(style.category);
   };
 
+  // 컬러도 마찬가지다. 추천 카드에서 고른 색이 아래 그리드에서 선택된 채로 보여야 한다.
+  const handleRecommendedColor = (color: HairColor) => {
+    setSelectedColor(color);
+    setColorCategory(color.category);
+  };
+
   const handleGenerate = async () => {
     if (!userImage || !selectedStyle) return;
     setStep(AppStep.PROCESSING);
@@ -115,6 +124,7 @@ const App: React.FC = () => {
     setUserImage(null);
     setSelectedStyle(null);
     setSelectedColor(hairColors.find(c => c.id === 'natural') || null);
+    setColorCategory('natural');
     setError(null);
     setRecommendation(null);
     recommendCache.current.clear();
@@ -285,9 +295,20 @@ const App: React.FC = () => {
                 </span>
                 <span className="text-[10px] font-normal text-gray-400 normal-case">(선택사항)</span>
               </div>
+              <ColorRecommendation
+                result={recommendation}
+                colors={hairColors}
+                isLoading={isRecommending}
+                selectedColorId={selectedColor?.id}
+                onColorSelected={handleRecommendedColor}
+              />
+
               <ColorSelector
                 selectedColor={selectedColor}
                 onColorSelected={setSelectedColor}
+                activeCategory={colorCategory}
+                onCategoryChange={setColorCategory}
+                recommendedIds={recommendedColorIds}
               />
             </div>
 

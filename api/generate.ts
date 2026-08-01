@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { GoogleGenAI, Type } from '@google/genai';
-import type { FaceShape, HairColor, HairStyle } from '../types';
+import type { FaceShape, HairColor, HairStyle, PersonalColor } from '../types';
 
 // 이 파일에는 상대경로 '값' import를 두지 않는다. package.json이 "type": "module"이라
 // 배포된 함수는 ESM으로 로드되고, ESM은 확장자 없는 상대경로를 해석하지 못해
@@ -135,6 +135,11 @@ const FACE_SHAPE_GUIDANCE: Record<FaceShape, string> = {
 
 const isFaceShape = (v: unknown): v is FaceShape =>
   typeof v === 'string' && (FACE_SHAPES as readonly string[]).includes(v);
+
+const PERSONAL_COLORS = ['spring-warm', 'summer-cool', 'autumn-warm', 'winter-cool'] as const;
+
+const isPersonalColor = (v: unknown): v is PersonalColor =>
+  typeof v === 'string' && (PERSONAL_COLORS as readonly string[]).includes(v);
 
 // 피부 보정 강도. 세게 밀수록 "예쁘지만 다른 사람"으로 넘어갈 위험이 커지므로
 // 코드 수정 없이 되돌릴 수 있게 환경변수로 뺐다.
@@ -301,32 +306,98 @@ const RECOMMEND_SCHEMA = {
         required: ['styleId', 'reason'],
       },
     },
+    personalColor: { type: Type.STRING, enum: [...PERSONAL_COLORS] },
+    colorNote: {
+      type: Type.STRING,
+      description:
+        'One short Korean sentence explaining the personal colour diagnosis, addressed to the client.',
+    },
+    colorRecommendations: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          colorId: {
+            type: Type.STRING,
+            description: 'Must be one of the ids from the colour catalogue.',
+          },
+          reason: {
+            type: Type.STRING,
+            description: 'One short Korean sentence on why this colour suits the client.',
+          },
+        },
+        required: ['colorId', 'reason'],
+      },
+    },
   },
-  required: ['faceShape', 'faceNote', 'recommendations'],
+  required: [
+    'faceShape',
+    'faceNote',
+    'recommendations',
+    'personalColor',
+    'colorNote',
+    'colorRecommendations',
+  ],
 };
 
-const buildRecommendPrompt = (catalogue: HairStyle[]) => `You are an experienced Korean salon director recommending haircuts.
+// 퍼스널 컬러 4계절 판정 기준. 모델이 매번 다른 잣대를 쓰지 않도록 프롬프트에 명시한다.
+const PERSONAL_COLOR_RUBRIC = `- spring-warm (봄 웜): warm golden undertone, light and clear colouring, gentle contrast between skin, hair and eyes
+- summer-cool (여름 쿨): cool pink undertone, soft and muted colouring, gentle contrast
+- autumn-warm (가을 웜): warm golden undertone, deep and muted colouring, rich and earthy
+- winter-cool (겨울 쿨): cool blue undertone, clear and deep colouring, strong contrast`;
+
+const buildRecommendPrompt = (
+  catalogue: HairStyle[],
+  colorCatalogue: HairColor[]
+) => `You are an experienced Korean salon director recommending haircuts and hair colour.
 
 Look at the client's photo and work out their face shape, features and overall vibe. Then pick the THREE styles from the catalogue below that would genuinely suit them best.
 
 ## CATALOGUE (you may ONLY recommend ids from this list)
 ${catalogue.map(s => `- ${s.id}: ${s.nameKo} (${s.category === 'cut' ? '컷' : '펌'}) — ${s.description} [${s.tags.join(', ')}]`).join('\n')}
 
+## PERSONAL COLOUR
+Separately, diagnose which of the four personal colour seasons the client belongs to. Judge it from the UNDERTONE of their skin, and from how their skin, hair and eye colours sit against each other:
+${PERSONAL_COLOR_RUBRIC}
+
+Then pick the THREE hair colours from the colour catalogue below that would suit that season best.
+
+## COLOUR CATALOGUE (you may ONLY recommend ids from this list)
+${colorCatalogue.map(c => `- ${c.id}: ${c.nameKo} — ${c.description}`).join('\n')}
+
 ## RULES
-- Recommend exactly three styles, best match first, and never repeat an id.
-- Base the choice on the client's actual face shape, proportions and features — not on which styles are generally popular.
-- Write "reason" and "faceNote" in warm, natural, conversational Korean, as if speaking directly to the client. One sentence each.
+- Recommend exactly three styles and exactly three colours, best match first, and never repeat an id.
+- Base the choice on the client's actual face shape, proportions, features and undertone — not on which styles or colours are generally popular.
+- Write "reason", "faceNote" and "colorNote" in warm, natural, conversational Korean, as if speaking directly to the client. One sentence each.
+- In "colorNote", name the season in Korean (봄 웜톤 / 여름 쿨톤 / 가을 웜톤 / 겨울 쿨톤) and say in one line what it means for their hair colour.
+- Judge the undertone only. Do NOT describe the client's skin as light or dark, and do NOT mention or infer ethnicity.
 - Do NOT use hashtags, emojis, or English words in the Korean text.
-- Do NOT comment on the client's attractiveness, weight, age, or anything unrelated to hair and face shape.`;
+- Do NOT comment on the client's attractiveness, weight, or age.`;
+
+// 모델이 카탈로그에 없는 id를 지어내거나 같은 id를 두 번 넣을 수 있어 서버에서 걸러낸다.
+const pickValidIds = (items: unknown, idKey: 'styleId' | 'colorId', allowed: Set<string>) => {
+  const seen = new Set<string>();
+  return (Array.isArray(items) ? items : [])
+    .filter((r: Record<string, unknown>) => {
+      const id = r?.[idKey];
+      if (typeof id !== 'string' || seen.has(id) || !allowed.has(id)) return false;
+      seen.add(id);
+      return true;
+    })
+    .slice(0, 3);
+};
 
 const handleRecommend = async (
   res: ServerResponse,
   apiKey: string,
   userImage: RegExpMatchArray,
   styles: HairStyle[],
+  colors: HairColor[],
   gender: unknown
 ) => {
   const catalogue = styles.filter(s => s.gender === (gender === 'male' ? 'male' : 'female'));
+  // 'natural'은 "염색 안함"이라 추천 대상이 아니다.
+  const colorCatalogue = colors.filter(c => c.id !== 'natural');
 
   const response = await getClient(apiKey).models.generateContent({
     model: TEXT_MODEL,
@@ -335,7 +406,7 @@ const handleRecommend = async (
         role: 'user',
         parts: [
           { inlineData: { mimeType: userImage[1], data: userImage[2] } },
-          { text: buildRecommendPrompt(catalogue) },
+          { text: buildRecommendPrompt(catalogue, colorCatalogue) },
         ],
       },
     ],
@@ -347,16 +418,11 @@ const handleRecommend = async (
 
   const parsed = JSON.parse(response.text || '{}');
 
-  // 모델이 카탈로그에 없는 id를 지어낼 수 있으므로 서버에서 걸러낸다.
-  const seen = new Set<string>();
-  const recommendations = (parsed.recommendations || [])
-    .filter((r: { styleId?: string }) => {
-      if (!r?.styleId || seen.has(r.styleId)) return false;
-      if (!catalogue.some(s => s.id === r.styleId)) return false;
-      seen.add(r.styleId);
-      return true;
-    })
-    .slice(0, 3);
+  const recommendations = pickValidIds(
+    parsed.recommendations,
+    'styleId',
+    new Set(catalogue.map(s => s.id))
+  );
 
   if (!recommendations.length) {
     console.error('Recommendation returned no usable style ids:', response.text);
@@ -364,10 +430,20 @@ const handleRecommend = async (
     return;
   }
 
+  // 컬러 추천은 부가 정보다. 비어 있어도 스타일 추천까지 버리지는 않는다.
+  const colorRecommendations = pickValidIds(
+    parsed.colorRecommendations,
+    'colorId',
+    new Set(colorCatalogue.map(c => c.id))
+  );
+
   sendJson(res, 200, {
     faceShape: isFaceShape(parsed.faceShape) ? parsed.faceShape : null,
     faceNote: typeof parsed.faceNote === 'string' ? parsed.faceNote : '',
     recommendations,
+    personalColor: isPersonalColor(parsed.personalColor) ? parsed.personalColor : null,
+    colorNote: typeof parsed.colorNote === 'string' ? parsed.colorNote : '',
+    colorRecommendations,
   });
 };
 
@@ -452,7 +528,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   if (body.action === 'recommend') {
     try {
-      await handleRecommend(res, apiKey, userImageMatch, data.styles, body.gender);
+      await handleRecommend(res, apiKey, userImageMatch, data.styles, data.colors, body.gender);
     } catch (err) {
       console.error('Recommendation failed:', err);
       sendJson(res, 500, { error: '추천에 실패했습니다.' });

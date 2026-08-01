@@ -1,45 +1,58 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { HairColor } from '../types';
 import { hairColors, colorCategories } from '../data/hairColors';
+import { ColorSwatch } from './ColorSwatch';
 
 interface ColorSelectorProps {
   selectedColor: HairColor | null;
   onColorSelected: (color: HairColor) => void;
+  // 추천 카드에서 고른 컬러가 아래 그리드에도 보이도록 탭을 바깥에서 제어한다.
+  activeCategory: string;
+  onCategoryChange: (categoryId: string) => void;
+  recommendedIds?: Set<string>;
 }
 
 export const ColorSelector: React.FC<ColorSelectorProps> = ({
   selectedColor,
-  onColorSelected
+  onColorSelected,
+  activeCategory,
+  onCategoryChange,
+  recommendedIds,
 }) => {
-  const [activeCategory, setActiveCategory] = useState<string>('natural');
-
   const filtered = hairColors.filter(c => c.category === activeCategory);
 
   return (
     <div>
       {/* Category Tabs - horizontal scrollable */}
       <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1 scrollbar-hide">
-        {colorCategories.map(cat => (
-          <button
-            key={cat.id}
-            onClick={() => setActiveCategory(cat.id)}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-              activeCategory === cat.id
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
+        {colorCategories.map(cat => {
+          const hasPick = hairColors.some(
+            c => c.category === cat.id && recommendedIds?.has(c.id)
+          );
+          return (
+            <button
+              key={cat.id}
+              onClick={() => onCategoryChange(cat.id)}
+              className={`relative shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                activeCategory === cat.id
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              {cat.label}
+              {/* 추천 컬러가 숨어 있는 탭을 표시해 준다. 안 그러면 다른 탭은 열어보지 않는다. */}
+              {hasPick && activeCategory !== cat.id && (
+                <span className="absolute top-0.5 right-1 w-1.5 h-1.5 bg-pink-500 rounded-full" />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Color Swatches */}
       <div className="grid grid-cols-4 gap-2">
         {filtered.map(color => {
           const isSelected = selectedColor?.id === color.id;
-          const isKeepOriginal = color.id === 'natural';
-          const hasGradient = !!color.colorHexSecond;
 
           return (
             <button
@@ -51,38 +64,18 @@ export const ColorSelector: React.FC<ColorSelectorProps> = ({
                   : 'hover:bg-gray-50 hover:scale-[1.03]'
               }`}
             >
-              {/* Color circle */}
-              <div className="relative">
-                <div
-                  className={`w-10 h-10 rounded-full shadow-md border-2 transition-all ${
-                    isSelected ? 'border-purple-500' : 'border-white'
-                  }`}
-                  style={
-                    isKeepOriginal
-                      ? {
-                          background: 'conic-gradient(#999, #666, #333, #666, #999)',
-                        }
-                      : hasGradient
-                      ? {
-                          background: `linear-gradient(135deg, ${color.colorHex} 50%, ${color.colorHexSecond} 50%)`,
-                        }
-                      : { backgroundColor: color.colorHex }
-                  }
-                />
-                {isSelected && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-5 h-5 bg-white/90 rounded-full flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="#7c3aed" className="w-3 h-3">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                    </div>
-                  </div>
-                )}
-              </div>
+              {recommendedIds?.has(color.id) && (
+                <span className="absolute top-0.5 right-0.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow">
+                  추천
+                </span>
+              )}
+              <ColorSwatch color={color} isSelected={isSelected} />
               {/* Label */}
-              <span className={`text-[10px] leading-tight text-center font-medium line-clamp-2 ${
-                isSelected ? 'text-purple-700' : 'text-gray-600'
-              }`}>
+              <span
+                className={`text-[10px] leading-tight text-center font-medium line-clamp-2 ${
+                  isSelected ? 'text-purple-700' : 'text-gray-600'
+                }`}
+              >
                 {color.nameKo}
               </span>
             </button>
