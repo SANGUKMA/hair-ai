@@ -34,6 +34,7 @@ Vercel 프로젝트 설정과 `.env.local`에 같은 이름으로 넣는다. 전
 | `IDENTITY_MODEL` | | `gemini-3.1-pro-preview` | 동일인 판정 모델. flash 계열은 같은 성별·연령대의 다른 얼굴을 통과시키므로 낮추지 말 것 |
 | `IDENTITY_CHECK` | | (켜짐) | `off`로 두면 동일인 검증을 건너뛴다. 세션당 약 30% 비용과 8초를 아끼는 대신 품질 하한이 사라진다 |
 | `RETOUCH_LEVEL` | | `medium` | 피부 보정 강도: `subtle` / `medium` / `strong` |
+| `STUDIO_BACKGROUND` | | (켜짐) | 결과 사진의 배경을 깔끔한 스튜디오 배경으로 교체한다. `off`면 회원이 찍은 배경을 그대로 살린다 |
 | `DAILY_LIMIT_PER_CODE` | | `20` | 코드별 하루 **생성** 횟수 |
 | `DAILY_RECOMMEND_LIMIT` | | 생성 한도 × 2 | 코드별 하루 추천 횟수. 추천은 사진을 올리면 자동으로 돌기 때문에 생성과 따로 센다 |
 

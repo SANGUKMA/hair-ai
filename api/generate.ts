@@ -313,6 +313,15 @@ const RETOUCH_LEVEL: RetouchLevel = (() => {
   return v === 'subtle' || v === 'medium' || v === 'strong' ? v : 'medium';
 })();
 
+// 회원 사진의 배경은 제각각이라 결과가 어수선해 보인다. 생성 단계가 어차피 이미지를
+// 다시 그리므로, 여기서 스튜디오 배경으로 정리하면 추가 호출 없이 결과가 깔끔해진다.
+// 결과물의 인상을 통째로 바꾸는 결정이라 코드 수정 없이 되돌릴 수 있게 뺐다.
+const STUDIO_BACKGROUND = process.env.STUDIO_BACKGROUND !== 'off';
+
+const BACKGROUND_RULE = STUDIO_BACKGROUND
+  ? 'Replace whatever is behind the client with a clean, neutral studio backdrop: plain warm grey or off-white, softly and evenly lit with a gentle falloff. No props, no furniture, no text, no hard edges. This is the ONLY thing about the scene you may change — the client, their pose, their clothing and the camera angle all stay exactly as they are.'
+  : 'Keep the SAME background as Image 1.';
+
 const RETOUCH_BLOCKS: Record<RetouchLevel, string> = {
   subtle: `### Gentle rejuvenation — this IS wanted, but keep it restrained:
 The client should look like the best-rested version of themselves: roughly three to five years younger.
@@ -332,7 +341,7 @@ The client should look like the best-rested, best-lit version of themselves walk
 - Tidy the hair too: no stray frizz, healthy natural shine, and grey strands restored to their natural younger color unless a grey or silver color was requested
 
 ### Make the photograph itself flattering:
-Finish the shot the way a professional salon photographer would. Keep the SAME camera angle, background, framing and lighting DIRECTION as Image 1, but soften and even out the light so it gently defines the cheekbones and jawline, add clean catchlights in the eyes, and lift harsh shadows.
+Finish the shot the way a professional salon photographer would. Keep the SAME camera angle, framing and lighting DIRECTION as Image 1, but soften and even out the light so it gently defines the cheekbones and jawline, add clean catchlights in the eyes, and lift harsh shadows.
 All of that definition must come from LIGHTING ONLY. Never move, slim or reshape any bone structure to achieve it.`,
 
   strong: `### Rejuvenation and beauty finish — go clearly further, but never break identity:
@@ -345,7 +354,7 @@ The client should look like a professionally styled, professionally lit beauty p
 - Restyle the hair to salon-finished quality: glossy, frizz-free, with grey strands restored to their natural younger color unless a grey or silver color was requested
 
 ### Make the photograph itself flattering:
-Finish the shot the way a professional beauty photographer would. Keep the SAME camera angle, background, framing and lighting DIRECTION as Image 1, but relight it softly and flatteringly: sculpt the cheekbones and jawline with light, add clean catchlights in the eyes, lift all harsh shadows.
+Finish the shot the way a professional beauty photographer would. Keep the SAME camera angle, framing and lighting DIRECTION as Image 1, but relight it softly and flatteringly: sculpt the cheekbones and jawline with light, add clean catchlights in the eyes, lift all harsh shadows.
 All of that definition must come from LIGHTING ONLY. Never move, slim or reshape any bone structure to achieve it.`,
 };
 
@@ -450,7 +459,8 @@ ${color ? `- Apply the requested color "${color.nameKo}": ${color.description}
 - Make it look like a professional salon coloring — even, with natural root-to-tip gradation.` : `- Use a natural hair color that matches the reference hairstyle or the client's original hair color.`}
 
 ## PHOTO QUALITY
-- Keep the SAME camera angle, background, and framing as Image 1
+- Keep the SAME camera angle and framing as Image 1
+- ${BACKGROUND_RULE}
 - Keep the same lighting DIRECTION as Image 1 (you may soften and even out the light as described above)
 - Photorealistic, sharp, high-resolution output
 - The result should look like the client simply got a new haircut at a salon

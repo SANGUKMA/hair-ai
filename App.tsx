@@ -11,6 +11,7 @@ import { AccessGate } from './components/AccessGate';
 import { InstallHint } from './components/InstallHint';
 import { AccessDeniedError, generateHairstyle, recommendStyles } from './services/geminiService';
 import { getAccessCode } from './utils/accessCode';
+import { normalizePhoto } from './utils/image';
 import {
   AppStep,
   Gender,
@@ -101,10 +102,13 @@ const App: React.FC = () => {
     []
   );
 
-  const handleUserImage = (image: string) => {
+  // 업로드든 촬영이든 여기 한 곳을 거쳐 기준 사진이 된다. 이후 진단·생성·리포트가
+  // 전부 이 사진을 쓰므로 Before로 보이는 것도 보정된 쪽이어야 비교가 공정하다.
+  const handleUserImage = async (image: string) => {
+    const base = await normalizePhoto(image);
     recommendCache.current.clear();
-    setUserImage(image);
-    requestRecommendation(image, gender, consult);
+    setUserImage(base);
+    requestRecommendation(base, gender, consult);
   };
 
   const handleGenderChange = (next: Gender) => {
