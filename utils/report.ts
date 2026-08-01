@@ -16,6 +16,7 @@ import {
   STYLE_UPKEEP_LABEL,
   STYLING_TIME_LABEL,
 } from '../data/labels';
+import { salon, salonContactLine } from './salon';
 
 export interface ReportData {
   originalImage: string;
@@ -122,6 +123,14 @@ const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   }
   push();
   return lines;
+};
+
+// 좁은 칸에 들어가는 이유 문구는 줄 수를 막아 카드가 한없이 길어지지 않게 한다.
+const clampLines = (lines: string[], max: number): string[] => {
+  if (lines.length <= max) return lines;
+  const kept = lines.slice(0, max);
+  kept[max - 1] = kept[max - 1].replace(/.$/, '…');
+  return kept;
 };
 
 const drawWrapped = (
@@ -270,7 +279,7 @@ export const renderReport = async (data: ReportData): Promise<string> => {
   // ── 헤더 ──────────────────────────────────────────────────────────
   ctx.fillStyle = PURPLE;
   ctx.font = font(800, 40);
-  ctx.fillText('HairFit AI', PAD, y + 36);
+  ctx.fillText(salon.name, PAD, y + 36, CONTENT - 200);
   ctx.fillStyle = FAINT;
   ctx.font = font(600, 24);
   const dateText = today();
@@ -397,57 +406,131 @@ export const renderReport = async (data: ReportData): Promise<string> => {
 
   // ── 추천 컬러 ──────────────────────────────────────────────────────
   const colorPicks = (rec?.colorRecommendations || [])
-    .map(r => data.colors.find(c => c.id === r.colorId))
-    .filter((c): c is HairColor => Boolean(c));
+    .map(r => ({ color: data.colors.find(c => c.id === r.colorId), reason: r.reason }))
+    .filter((p): p is { color: HairColor; reason: string } => Boolean(p.color));
 
   if (colorPicks.length) {
-    const cardH = 168;
+    const slot = (CONTENT - 48) / colorPicks.length;
+    const textW = slot - 16;
+
+    // 이유가 가장 긴 칸에 맞춰 카드 높이를 잡는다.
+    ctx.font = font(500, 19);
+    const reasonLines = colorPicks.map(p => clampLines(wrapText(ctx, p.reason, textW), 3));
+    const reasonH = Math.max(...reasonLines.map(l => l.length)) * 26;
+    const cardH = 66 + 68 + 34 + reasonH + 24;
+
     fillRoundRect(ctx, PAD, y, CONTENT, cardH, 24, CARD, LINE);
     ctx.fillStyle = INK;
     ctx.font = font(700, 26);
     ctx.fillText('어울리는 염색 컬러', PAD + 24, y + 46);
 
-    const slot = (CONTENT - 48) / colorPicks.length;
-    colorPicks.forEach((color, i) => {
+    colorPicks.forEach(({ color }, i) => {
       const cx = PAD + 24 + slot * i;
-      colorFill(ctx, color, cx + slot / 2 - 34, y + 68, 68);
+      colorFill(ctx, color, cx + slot / 2 - 34, y + 66, 68);
+      ctx.fillStyle = INK;
+      ctx.font = font(700, 21);
+      const lw = Math.min(ctx.measureText(color.nameKo).width, textW);
+      ctx.fillText(color.nameKo, cx + slot / 2 - lw / 2, y + 160, textW);
+
       ctx.fillStyle = MUTED;
-      ctx.font = font(600, 21);
-      const label = color.nameKo;
-      const lw = Math.min(ctx.measureText(label).width, slot - 12);
-      ctx.fillText(label, cx + slot / 2 - lw / 2, y + 158, slot - 12);
+      ctx.font = font(500, 19);
+      let ry = y + 190;
+      for (const line of reasonLines[i]) {
+        const w = Math.min(ctx.measureText(line).width, textW);
+        ctx.fillText(line, cx + slot / 2 - w / 2, ry, textW);
+        ry += 26;
+      }
     });
     y += cardH + 24;
   }
 
   // ── 함께 추천드린 스타일 ───────────────────────────────────────────
   const stylePicks = (rec?.recommendations || [])
-    .map(r => data.styles.find(s => s.id === r.styleId))
-    .filter((s): s is HairStyle => Boolean(s));
+    .map(r => ({ style: data.styles.find(s => s.id === r.styleId), reason: r.reason }))
+    .filter((p): p is { style: HairStyle; reason: string } => Boolean(p.style));
 
   if (stylePicks.length) {
     const thumbs = await Promise.all(
-      stylePicks.map(s => loadImage(s.imagePath).catch(() => null))
+      stylePicks.map(p => loadImage(p.style.imagePath).catch(() => null))
     );
     const slot = (CONTENT - 48 - 24 * (stylePicks.length - 1)) / stylePicks.length;
     const thumbH = Math.round(slot * 1.2);
-    const cardH = 66 + thumbH + 46;
+
+    ctx.font = font(500, 19);
+    const reasonLines = stylePicks.map(p => clampLines(wrapText(ctx, p.reason, slot), 3));
+    const reasonH = Math.max(...reasonLines.map(l => l.length)) * 26;
+    const cardH = 66 + thumbH + 34 + 28 + reasonH + 20;
+
     fillRoundRect(ctx, PAD, y, CONTENT, cardH, 24, CARD, LINE);
     ctx.fillStyle = INK;
     ctx.font = font(700, 26);
     ctx.fillText('함께 추천드린 스타일', PAD + 24, y + 46);
 
-    stylePicks.forEach((style, i) => {
+    stylePicks.forEach(({ style }, i) => {
       const cx = PAD + 24 + (slot + 24) * i;
       const thumb = thumbs[i];
       if (thumb) drawCover(ctx, thumb, cx, y + 66, slot, thumbH, 16);
       else fillRoundRect(ctx, cx, y + 66, slot, thumbH, 16, '#f3f4f6');
-      ctx.fillStyle = MUTED;
-      ctx.font = font(600, 21);
+
+      let ry = y + 66 + thumbH + 32;
+      ctx.fillStyle = INK;
+      ctx.font = font(700, 21);
       const lw = Math.min(ctx.measureText(style.nameKo).width, slot);
-      ctx.fillText(style.nameKo, cx + slot / 2 - lw / 2, y + 66 + thumbH + 32, slot);
+      ctx.fillText(style.nameKo, cx + slot / 2 - lw / 2, ry, slot);
+
+      ry += 28;
+      ctx.fillStyle = PURPLE;
+      ctx.font = font(700, 18);
+      const upkeep = STYLE_UPKEEP_LABEL[style.upkeep];
+      const uw = Math.min(ctx.measureText(upkeep).width, slot);
+      ctx.fillText(upkeep, cx + slot / 2 - uw / 2, ry, slot);
+
+      ry += 26;
+      ctx.fillStyle = MUTED;
+      ctx.font = font(500, 19);
+      for (const line of reasonLines[i]) {
+        const w = Math.min(ctx.measureText(line).width, slot);
+        ctx.fillText(line, cx + slot / 2 - w / 2, ry, slot);
+        ry += 26;
+      }
     });
     y += cardH + 24;
+  }
+
+  // ── 원장 관리 조언 ─────────────────────────────────────────────────
+  {
+    const advice = [
+      { label: '모발 관리', body: rec?.hairCare || '' },
+      { label: '퍼스널 컬러 활용', body: rec?.colorStyling || '' },
+    ].filter(a => a.body);
+
+    if (advice.length) {
+      ctx.font = font(500, 23);
+      const blocks = advice.map(a => ({ ...a, lines: wrapText(ctx, a.body, CONTENT - 48) }));
+      const bodyH = blocks.reduce((sum, b) => sum + 34 + b.lines.length * 32 + 18, 0);
+      const cardH = 66 + bodyH;
+
+      fillRoundRect(ctx, PAD, y, CONTENT, cardH, 24, CARD, LINE);
+      ctx.fillStyle = INK;
+      ctx.font = font(700, 26);
+      ctx.fillText('원장님 관리 조언', PAD + 24, y + 46);
+
+      let ry = y + 80;
+      for (const block of blocks) {
+        ctx.fillStyle = PURPLE;
+        ctx.font = font(700, 23);
+        ctx.fillText(block.label, PAD + 24, ry);
+        ry += 34;
+        ctx.fillStyle = MUTED;
+        ctx.font = font(500, 23);
+        for (const line of block.lines) {
+          ctx.fillText(line, PAD + 24, ry);
+          ry += 32;
+        }
+        ry += 18;
+      }
+      y += cardH + 24;
+    }
   }
 
   // ── 상담 조건 (답한 것이 있을 때만) ────────────────────────────────
@@ -482,10 +565,10 @@ export const renderReport = async (data: ReportData): Promise<string> => {
     fillRoundRect(ctx, PAD, y, CONTENT, barH, 20, '#111827');
     ctx.fillStyle = '#ffffff';
     ctx.font = font(700, 26);
-    ctx.fillText('HairFit AI', PAD + 24, y + 40);
+    ctx.fillText(salon.name, PAD + 24, y + 40, CONTENT - 48);
     ctx.fillStyle = '#9ca3af';
     ctx.font = font(500, 20);
-    ctx.fillText('회원 전용 헤어 시뮬레이션 · C-클리어', PAD + 24, y + 68);
+    ctx.fillText(salonContactLine(), PAD + 24, y + 68, CONTENT - 48);
     y += barH;
   }
 

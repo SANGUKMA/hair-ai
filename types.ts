@@ -125,4 +125,8 @@ export interface RecommendResult extends HairDiagnosis {
   personalColor: PersonalColor | null;
   colorNote: string;     // 퍼스널 컬러 진단 요약 (한국어 한 문장)
   colorRecommendations: ColorRecommendation[];
+  // 리포트에 담을 원장 조언. 진단한 모발·퍼스널 컬러에서 곧바로 따라 나오는 내용이라
+  // 같은 호출에서 함께 받는다.
+  hairCare: string;      // 모발·두피 관리 조언 (2-3문장)
+  colorStyling: string;  // 진단된 퍼스널 컬러를 일상에서 쓰는 법 (2-3문장)
 }

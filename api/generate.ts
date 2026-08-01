@@ -694,6 +694,16 @@ const RECOMMEND_SCHEMA = {
         required: ['colorId', 'reason'],
       },
     },
+    hairCare: {
+      type: Type.STRING,
+      description:
+        'Two or three Korean sentences of practical hair and scalp care for this client, based on the hair just diagnosed.',
+    },
+    colorStyling: {
+      type: Type.STRING,
+      description:
+        'Two or three Korean sentences on living with the diagnosed personal colour season day to day.',
+    },
   },
   required: [
     'faceShape',
@@ -707,6 +717,8 @@ const RECOMMEND_SCHEMA = {
     'personalColor',
     'colorNote',
     'colorRecommendations',
+    'hairCare',
+    'colorStyling',
   ],
 };
 
@@ -748,6 +760,23 @@ Then pick the THREE hair colours from the colour catalogue below that would suit
 ## COLOUR CATALOGUE (you may ONLY recommend ids from this list)
 ${colorCatalogue.map(c => `- ${c.id}: ${c.nameKo} — ${c.description}`).join('\n')}
 ${buildConsultContext(consult)}
+
+## ADVICE FOR THE REPORT
+The client takes a written report home, so write two short pieces of advice for it.
+
+- "hairCare": two or three sentences of practical care for the hair you just diagnosed —
+  washing and drying habits, heat, and how to keep the recommended cut sitting well. Speak to
+  what you actually saw: fine hair, very dense hair and a strong curl each need different
+  handling, so this must not read as generic advice that would suit anyone.
+- "colorStyling": two or three sentences on living with their personal colour season — which
+  hair tones sit with it, and which make-up or clothing tones agree with it. Explain WHY the
+  season leads there, so the colour recommendations above make sense to them.
+
+Rules for both:
+- Never diagnose a medical or scalp condition, and never promise a treatment result. You are a
+  salon director, not a doctor.
+- Do not name any product or brand.
+- Keep it doable at home. Advice that needs a salon visit to follow is not advice.
 
 ## RULES
 - Recommend exactly three styles and exactly three colours, best match first, and never repeat an id.
@@ -851,6 +880,8 @@ const handleRecommend = async (
     personalColor: isPersonalColor(parsed.personalColor) ? parsed.personalColor : null,
     colorNote: note(parsed.colorNote),
     colorRecommendations,
+    hairCare: note(parsed.hairCare),
+    colorStyling: note(parsed.colorStyling),
   });
 };
 
