@@ -1,9 +1,18 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { StyleAdjustments } from '../types';
+import { StyleAdjuster } from './StyleAdjuster';
 
 interface ResultViewerProps {
   originalImage: string;
   generatedImage: string;
   stylistComment?: string;
+  adjustments: StyleAdjustments;
+  onAdjustmentsChange: (next: StyleAdjustments) => void;
+  showCurl: boolean;
+  // 지금 화면의 결과를 만든 조건과 달라졌는지. 버튼 문구만 바꾼다.
+  isDirty: boolean;
+  onRegenerate: () => void;
+  onChangeStyle: () => void;
   onSave: () => void;
   onReset: () => void;
 }
@@ -12,6 +21,12 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
   originalImage,
   generatedImage,
   stylistComment,
+  adjustments,
+  onAdjustmentsChange,
+  showCurl,
+  isDirty,
+  onRegenerate,
+  onChangeStyle,
   onSave,
   onReset
 }) => {
@@ -111,20 +126,50 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
         </div>
       )}
 
-      <div className="mt-6 flex gap-4 px-2 mb-8">
+      <div className="mt-5 mx-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+        <div className="flex items-baseline gap-2 mb-3">
+          <p className="text-sm font-bold text-gray-800">조금 더 다듬기</p>
+          <p className="text-[10px] text-gray-400">사진은 그대로 두고 다시 만듭니다</p>
+        </div>
+
+        <StyleAdjuster
+          adjustments={adjustments}
+          onChange={onAdjustmentsChange}
+          showCurl={showCurl}
+        />
+
         <button
-          onClick={onReset}
+          onClick={onRegenerate}
+          className="mt-4 w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-200 hover:shadow-purple-300 transition-all active:scale-95"
+        >
+          {isDirty ? '조정해서 다시 만들기' : '같은 조건으로 다시 만들기'}
+        </button>
+        <p className="mt-2 text-[10px] text-gray-400 text-center">
+          다시 만들 때마다 하루 사용 횟수가 1회 차감됩니다
+        </p>
+      </div>
+
+      <div className="mt-5 flex gap-4 px-2">
+        <button
+          onClick={onChangeStyle}
           className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
         >
-          Try Again
+          다른 스타일
         </button>
         <button
           onClick={onSave}
           className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-200 hover:shadow-purple-300 transition-all active:scale-95"
         >
-          Save & Share
+          저장하기
         </button>
       </div>
+
+      <button
+        onClick={onReset}
+        className="mt-3 mb-8 mx-auto block text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2"
+      >
+        처음부터 다시
+      </button>
     </div>
   );
 };

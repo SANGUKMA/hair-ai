@@ -5,6 +5,8 @@ import { GoogleGenAI, Type } from '@google/genai';
 import type {
   CrownVolume,
   FaceShape,
+  FringeAdjustment,
+  StyleAdjustments,
   HairColor,
   HairDensity,
   HairDiagnosis,
@@ -191,6 +193,62 @@ const CROWN_VOLUME_GUIDANCE: Record<CrownVolume, string> = {
   full: 'The crown already has natural height. Do not add volume there, or the head will read too large for the face.',
 };
 
+const FRINGE_ADJUSTMENTS = ['keep', 'add', 'remove'] as const;
+const isFringeAdjustment = oneOf(FRINGE_ADJUSTMENTS);
+
+// types.ts의 ADJUSTMENT_LIMIT과 같은 값. 이 파일은 상대경로 '값' import가 금지라
+// (파일 맨 위 주석 참고) 공유하지 못하고 중복해 둔다.
+const ADJUSTMENT_LIMIT = 2;
+
+const toLevel = (v: unknown): number => {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return 0;
+  return Math.max(-ADJUSTMENT_LIMIT, Math.min(ADJUSTMENT_LIMIT, Math.trunc(v)));
+};
+
+const STEP_WORD = ['', 'slightly', 'clearly'];
+
+// 결과를 보고 누른 미세조정. 참조 사진과 충돌하면 이쪽이 이겨야 한다 —
+// 고객이 이미 한 번 보고 "이건 좀 다르게"라고 말한 내용이기 때문이다.
+const buildAdjustmentContext = (adj: StyleAdjustments, style: HairStyle): string => {
+  const word = (n: number) => STEP_WORD[Math.abs(n)];
+  const lines: string[] = [];
+
+  if (adj.length) {
+    lines.push(
+      `- Length: cut it ${word(adj.length)} ${adj.length < 0 ? 'shorter' : 'longer'} than the reference style shows.`
+    );
+  }
+  if (adj.volume) {
+    lines.push(
+      adj.volume > 0
+        ? `- Volume: give it ${word(adj.volume)} more body and lift than the reference style shows.`
+        : `- Volume: make it ${word(adj.volume)} sleeker and closer to the head than the reference style shows.`
+    );
+  }
+  // 컬 조정은 펌에만 의미가 있다. 컷에 들어오면 무시한다.
+  if (adj.curl && style.category === 'perm') {
+    lines.push(
+      adj.curl > 0
+        ? `- Curl: make the curl pattern ${word(adj.curl)} tighter and more defined.`
+        : `- Curl: make the curl pattern ${word(adj.curl)} looser and softer.`
+    );
+  }
+  if (adj.fringe === 'add') {
+    lines.push('- Fringe: add a fringe that suits this client, even if the reference style has none.');
+  }
+  if (adj.fringe === 'remove') {
+    lines.push('- Fringe: no fringe. Sweep the front pieces back or to the side, even if the reference style has one.');
+  }
+
+  if (!lines.length) return '';
+
+  return `
+
+## THE CLIENT'S REQUESTED CHANGES
+The client has already seen a first result and asked for these specific changes. Where they conflict with the reference photo, THESE WIN — the reference is only a starting point now.
+${lines.join('\n')}`;
+};
+
 // 피부 보정 강도. 세게 밀수록 "예쁘지만 다른 사람"으로 넘어갈 위험이 커지므로
 // 코드 수정 없이 되돌릴 수 있게 환경변수로 뺐다.
 type RetouchLevel = 'subtle' | 'medium' | 'strong';
@@ -240,9 +298,11 @@ const buildPrompt = (
   style: HairStyle,
   color?: HairColor,
   diagnosis: Partial<HairDiagnosis> = {},
+  adjustments?: StyleAdjustments,
   retouch: RetouchLevel = RETOUCH_LEVEL
 ) => {
   const { faceShape, hairThickness, hairDensity, hairTexture, crownVolume } = diagnosis;
+  const adjustmentContext = adjustments ? buildAdjustmentContext(adjustments, style) : '';
 
   const faceContext = faceShape
     ? `
@@ -314,7 +374,7 @@ If the retouching ever starts to change WHO the person is, stop and keep the ori
 - Do NOT apply a heavy beauty filter or airbrushed, plastic, doll-like skin
 - Do NOT erase all pores and texture — the result must still read as a real photograph
 - Do NOT turn an adult into a teenager or shift the client's apparent generation
-- Do NOT blend or morph the two faces together in any way
+- Do NOT blend or morph the two faces together in any way${adjustmentContext}
 
 ## HAIR EDITING INSTRUCTIONS
 
@@ -572,6 +632,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     hairDensity?: unknown;
     hairTexture?: unknown;
     crownVolume?: unknown;
+    adjustments?: unknown;
   };
   try {
     body = (await readBody(req)) as typeof body;
@@ -662,6 +723,21 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     crownVolume: isCrownVolume(body.crownVolume) ? body.crownVolume : undefined,
   };
 
+  // 배열도 length를 갖고 문자열도 마찬가지라, 순수 객체일 때만 읽는다.
+  const rawAdjustments =
+    body.adjustments && typeof body.adjustments === 'object' && !Array.isArray(body.adjustments)
+      ? (body.adjustments as Record<string, unknown>)
+      : {};
+
+  const adjustments: StyleAdjustments = {
+    length: toLevel(rawAdjustments.length),
+    volume: toLevel(rawAdjustments.volume),
+    curl: toLevel(rawAdjustments.curl),
+    fringe: isFringeAdjustment(rawAdjustments.fringe)
+      ? (rawAdjustments.fringe as FringeAdjustment)
+      : 'keep',
+  };
+
   try {
     const styleImage = await loadStyleImage(style);
     const response = await getClient(apiKey).models.generateContent({
@@ -672,7 +748,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           parts: [
             { inlineData: { mimeType: userImageMatch[1], data: userImageMatch[2] } },
             { inlineData: { mimeType: styleImage.mimeType, data: styleImage.data } },
-            { text: buildPrompt(style, color, diagnosis) },
+            { text: buildPrompt(style, color, diagnosis, adjustments) },
           ],
         },
       ],

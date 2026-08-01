@@ -62,6 +62,32 @@ export interface StyleRecommendation {
   reason: string;        // 이 스타일이 어울리는 이유 (한국어 한 문장)
 }
 
+export type FringeAdjustment = 'keep' | 'add' | 'remove';
+
+// 결과를 보고 누르는 미세조정. 자유 입력이 아니라 고정된 축으로 받는다 —
+// 프롬프트에 임의 문장이 섞이지 않고, 같은 버튼을 두 번 눌러 강도를 올릴 수 있다.
+export interface StyleAdjustments {
+  length: number;   // -2..2, 음수가 짧게
+  volume: number;   // -2..2, 양수가 볼륨 많게
+  curl: number;     // -2..2, 펌에만 적용
+  fringe: FringeAdjustment;
+}
+
+export const ADJUSTMENT_LIMIT = 2;
+
+export const NO_ADJUSTMENTS: StyleAdjustments = {
+  length: 0,
+  volume: 0,
+  curl: 0,
+  fringe: 'keep',
+};
+
+export const isAdjusted = (a: StyleAdjustments): boolean =>
+  a.length !== 0 || a.volume !== 0 || a.curl !== 0 || a.fringe !== 'keep';
+
+export const sameAdjustments = (a: StyleAdjustments, b: StyleAdjustments): boolean =>
+  a.length === b.length && a.volume === b.volume && a.curl === b.curl && a.fringe === b.fringe;
+
 export interface ColorRecommendation {
   colorId: string;
   reason: string;        // 이 컬러가 어울리는 이유 (한국어 한 문장)

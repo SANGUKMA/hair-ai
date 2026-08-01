@@ -1,4 +1,4 @@
-import type { Gender, HairDiagnosis, RecommendResult } from '../types';
+import type { Gender, HairDiagnosis, RecommendResult, StyleAdjustments } from '../types';
 import { clearAccessCode, getAccessCode } from '../utils/accessCode';
 
 export interface GenerateResult {
@@ -57,7 +57,8 @@ export const generateHairstyle = (
   userImage: string,
   styleId: string,
   colorId?: string,
-  diagnosis?: HairDiagnosis | null
+  diagnosis?: HairDiagnosis | null,
+  adjustments?: StyleAdjustments
 ): Promise<GenerateResult> =>
   postJson({
     action: 'generate',
@@ -69,4 +70,5 @@ export const generateHairstyle = (
     hairDensity: diagnosis?.hairDensity,
     hairTexture: diagnosis?.hairTexture,
     crownVolume: diagnosis?.crownVolume,
+    adjustments,
   });

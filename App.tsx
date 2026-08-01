@@ -11,7 +11,17 @@ import { AccessGate } from './components/AccessGate';
 import { InstallHint } from './components/InstallHint';
 import { AccessDeniedError, generateHairstyle, recommendStyles } from './services/geminiService';
 import { getAccessCode } from './utils/accessCode';
-import { AppStep, Gender, StyleCategory, HairStyle, HairColor, RecommendResult } from './types';
+import {
+  AppStep,
+  Gender,
+  StyleCategory,
+  HairStyle,
+  HairColor,
+  RecommendResult,
+  StyleAdjustments,
+  NO_ADJUSTMENTS,
+  sameAdjustments,
+} from './types';
 import { hairstyles } from './data/hairstyles';
 import { hairColors } from './data/hairColors';
 
@@ -30,6 +40,11 @@ const App: React.FC = () => {
   const [gender, setGender] = useState<Gender>('female');
   const [styleCategory, setStyleCategory] = useState<StyleCategory>('cut');
   const [colorCategory, setColorCategory] = useState<string>('natural');
+
+  // 결과 화면에서 만지는 값(adjustments)과 지금 보이는 결과를 만든 값(applied)을 따로 둔다.
+  // 칩을 누르는 건 공짜고, 생성은 버튼을 눌렀을 때 한 번만 일어난다.
+  const [adjustments, setAdjustments] = useState<StyleAdjustments>(NO_ADJUSTMENTS);
+  const [appliedAdjustments, setAppliedAdjustments] = useState<StyleAdjustments>(NO_ADJUSTMENTS);
 
   const [recommendation, setRecommendation] = useState<RecommendResult | null>(null);
   const [isRecommending, setIsRecommending] = useState(false);
@@ -96,10 +111,12 @@ const App: React.FC = () => {
         userImage,
         selectedStyle.id,
         selectedColor?.id,
-        recommendation
+        recommendation,
+        adjustments
       );
       setResultImage(result.image);
       setStylistComment(result.comment);
+      setAppliedAdjustments(adjustments);
       setStep(AppStep.RESULT);
     } catch (err) {
       console.error(err);
@@ -113,9 +130,23 @@ const App: React.FC = () => {
           ? err.message
           : '헤어스타일 생성에 실패했습니다. 얼굴이 잘 보이는 사진으로 다시 시도해주세요.'
       );
-      setStep(AppStep.HOME);
+      // 다시 만들기가 실패한 경우엔 보고 있던 결과를 그대로 두고 그 화면에 머문다.
+      // 홈으로 밀어내면 멀쩡한 결과가 사라진 것처럼 보인다.
+      setStep(resultImage ? AppStep.RESULT : AppStep.HOME);
     }
   };
+
+  // 사진과 진단은 그대로 두고 스타일만 다시 고른다. 추천을 다시 부르지 않으므로
+  // 하루 사용 횟수는 생성 1회만 쓴다.
+  const handleChangeStyle = useCallback(() => {
+    setStep(AppStep.HOME);
+    setResultImage(null);
+    setStylistComment('');
+    setSelectedStyle(null);
+    setAdjustments(NO_ADJUSTMENTS);
+    setAppliedAdjustments(NO_ADJUSTMENTS);
+    setError(null);
+  }, []);
 
   const handleReset = useCallback(() => {
     setStep(AppStep.HOME);
@@ -123,6 +154,8 @@ const App: React.FC = () => {
     setStylistComment('');
     setUserImage(null);
     setSelectedStyle(null);
+    setAdjustments(NO_ADJUSTMENTS);
+    setAppliedAdjustments(NO_ADJUSTMENTS);
     setSelectedColor(hairColors.find(c => c.id === 'natural') || null);
     setColorCategory('natural');
     setError(null);
@@ -352,7 +385,7 @@ const App: React.FC = () => {
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">스타일 적용 중...</h3>
             <p className="text-gray-500 text-sm max-w-xs">
-              AI가 얼굴 특징을 분석하고 새로운 헤어스타일을 적용하고 있습니다. 약 10-15초 정도 소요됩니다.
+              AI가 얼굴 특징을 분석하고 새로운 헤어스타일을 적용하고 있습니다. 약 20초 정도 소요됩니다.
             </p>
           </div>
         )}
@@ -371,10 +404,21 @@ const App: React.FC = () => {
                 </div>
               )}
             </div>
+            {error && (
+              <div className="bg-red-50 text-red-600 text-xs p-3 rounded-lg mb-4 text-center border border-red-100">
+                {error}
+              </div>
+            )}
             <ResultViewer
               originalImage={userImage}
               generatedImage={resultImage}
               stylistComment={stylistComment}
+              adjustments={adjustments}
+              onAdjustmentsChange={setAdjustments}
+              showCurl={selectedStyle?.category === 'perm'}
+              isDirty={!sameAdjustments(adjustments, appliedAdjustments)}
+              onRegenerate={handleGenerate}
+              onChangeStyle={handleChangeStyle}
               onSave={handleSave}
               onReset={handleReset}
             />
