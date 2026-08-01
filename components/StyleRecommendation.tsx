@@ -7,6 +7,9 @@ interface StyleRecommendationProps {
   isLoading: boolean;
   selectedStyleId?: string;
   onStyleSelected: (style: HairStyle) => void;
+  // 상담 답변이 이 추천을 받은 뒤에 바뀌었는지. 다시 받을지는 회원이 정한다.
+  consultChanged: boolean;
+  onRerecommend: () => void;
 }
 
 export const StyleRecommendation: React.FC<StyleRecommendationProps> = ({
@@ -15,6 +18,8 @@ export const StyleRecommendation: React.FC<StyleRecommendationProps> = ({
   isLoading,
   selectedStyleId,
   onStyleSelected,
+  consultChanged,
+  onRerecommend,
 }) => {
   if (isLoading) {
     return (
@@ -90,6 +95,21 @@ export const StyleRecommendation: React.FC<StyleRecommendationProps> = ({
           </button>
         ))}
       </div>
+
+      {consultChanged && (
+        <div className="mt-3 pt-3 border-t border-purple-100">
+          <button
+            type="button"
+            onClick={onRerecommend}
+            className="w-full py-2.5 rounded-xl text-xs font-bold bg-white border border-purple-300 text-purple-700 hover:bg-purple-50 transition-colors"
+          >
+            바뀐 조건으로 다시 추천받기
+          </button>
+          <p className="mt-1.5 text-[10px] text-gray-400 text-center">
+            하루 사용 횟수가 1회 차감됩니다
+          </p>
+        </div>
+      )}
     </div>
   );
 };

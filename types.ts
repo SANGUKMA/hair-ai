@@ -62,6 +62,28 @@ export interface StyleRecommendation {
   reason: string;        // 이 스타일이 어울리는 이유 (한국어 한 문장)
 }
 
+// 사진에 나오지 않는 정보. 아무리 잘 어울려도 아침에 손질할 시간이 없으면 못 쓰는
+// 커트이고, 기르는 중인 사람에게 짧은 머리를 권하면 추천 자체가 무의미하다.
+// 기본값은 전부 'any'라, 답하지 않으면 지금까지와 똑같이 동작한다.
+export type StylingTime = 'quick' | 'some' | 'any';
+export type LengthPlan = 'growing' | 'shorter' | 'any';
+export type Formality = 'tidy' | 'free' | 'any';
+
+export interface ConsultAnswers {
+  stylingTime: StylingTime;
+  lengthPlan: LengthPlan;
+  formality: Formality;
+}
+
+export const NO_CONSULT: ConsultAnswers = {
+  stylingTime: 'any',
+  lengthPlan: 'any',
+  formality: 'any',
+};
+
+export const sameConsult = (a: ConsultAnswers, b: ConsultAnswers): boolean =>
+  a.stylingTime === b.stylingTime && a.lengthPlan === b.lengthPlan && a.formality === b.formality;
+
 export type FringeAdjustment = 'keep' | 'add' | 'remove';
 
 // 결과를 보고 누르는 미세조정. 자유 입력이 아니라 고정된 축으로 받는다 —

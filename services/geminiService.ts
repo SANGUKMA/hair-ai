@@ -1,4 +1,10 @@
-import type { Gender, HairDiagnosis, RecommendResult, StyleAdjustments } from '../types';
+import type {
+  ConsultAnswers,
+  Gender,
+  HairDiagnosis,
+  RecommendResult,
+  StyleAdjustments,
+} from '../types';
 import { clearAccessCode, getAccessCode } from '../utils/accessCode';
 
 export interface GenerateResult {
@@ -48,8 +54,11 @@ export const verifyAccessCode = async (code: string): Promise<void> => {
 };
 
 // 사진을 올리면 먼저 얼굴을 분석해 어울리는 스타일 세 가지를 추천받는다.
-export const recommendStyles = (userImage: string, gender: Gender): Promise<RecommendResult> =>
-  postJson({ action: 'recommend', userImage, gender });
+export const recommendStyles = (
+  userImage: string,
+  gender: Gender,
+  consult?: ConsultAnswers
+): Promise<RecommendResult> => postJson({ action: 'recommend', userImage, gender, consult });
 
 // API 키를 브라우저에 노출하지 않기 위해 /api/generate 서버리스 함수를 경유한다.
 // 프롬프트 구성과 스타일 이미지 로딩은 모두 서버(api/generate.ts)에서 처리한다.

@@ -3,6 +3,7 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import { GoogleGenAI, Type } from '@google/genai';
 import type {
+  ConsultAnswers,
   CrownVolume,
   FaceShape,
   FringeAdjustment,
@@ -195,6 +196,53 @@ const CROWN_VOLUME_GUIDANCE: Record<CrownVolume, string> = {
 
 const FRINGE_ADJUSTMENTS = ['keep', 'add', 'remove'] as const;
 const isFringeAdjustment = oneOf(FRINGE_ADJUSTMENTS);
+
+// 상담 답변. 사진으로는 알 수 없고 물어야만 얻는 정보라, 어울림보다 우선하는 제약이다.
+const STYLING_TIMES = ['quick', 'some', 'any'] as const;
+const LENGTH_PLANS = ['growing', 'shorter', 'any'] as const;
+const FORMALITIES = ['tidy', 'free', 'any'] as const;
+
+const isStylingTime = oneOf(STYLING_TIMES);
+const isLengthPlan = oneOf(LENGTH_PLANS);
+const isFormality = oneOf(FORMALITIES);
+
+// 'any'는 아무 줄도 만들지 않는다. 답하지 않은 항목을 굳이 알리면 모델이 거기에
+// 대해 뭔가 가정하기 시작한다.
+const CONSULT_GUIDANCE: Record<string, string> = {
+  'stylingTime:quick':
+    'They have five minutes at most in the morning. Do not recommend a cut that only works after a blow-dry, product or an iron — it has to fall right on its own once dry.',
+  'stylingTime:some':
+    'They will spend about ten minutes styling. A daily blow-dry is fine, but not a cut that needs an iron and product every single day.',
+  'lengthPlan:growing':
+    'They are growing their hair out. Do not recommend anything that takes off real length — favour shapes that work while growing, such as layers or a fringe.',
+  'lengthPlan:shorter':
+    'They are happy to go noticeably shorter, so genuinely short cuts are on the table.',
+  'formality:tidy':
+    'They need to look tidy for work or school. Avoid dramatic, strongly asymmetric or obviously high-maintenance shapes.',
+  'formality:free':
+    'They have no dress code to work around, so bolder and more distinctive shapes are welcome.',
+};
+
+const buildConsultContext = (consult: ConsultAnswers): string => {
+  const lines = (
+    [
+      ['stylingTime', consult.stylingTime],
+      ['lengthPlan', consult.lengthPlan],
+      ['formality', consult.formality],
+    ] as const
+  )
+    .filter(([, value]) => value !== 'any')
+    .map(([key, value]) => `- ${CONSULT_GUIDANCE[`${key}:${value}`]}`)
+    .filter(Boolean);
+
+  if (!lines.length) return '';
+
+  return `
+
+## WHAT THE CLIENT TOLD US
+None of this is visible in the photo, and it outranks what merely looks good. A style that does not fit these is the wrong recommendation no matter how well it suits their face.
+${lines.join('\n')}`;
+};
 
 // types.ts의 ADJUSTMENT_LIMIT과 같은 값. 이 파일은 상대경로 '값' import가 금지라
 // (파일 맨 위 주석 참고) 공유하지 못하고 중복해 둔다.
@@ -663,7 +711,8 @@ const PERSONAL_COLOR_RUBRIC = `- spring-warm (봄 웜): warm golden undertone, l
 
 const buildRecommendPrompt = (
   catalogue: HairStyle[],
-  colorCatalogue: HairColor[]
+  colorCatalogue: HairColor[],
+  consult: ConsultAnswers
 ) => `You are an experienced Korean salon director recommending haircuts and hair colour.
 
 Look at the client's photo and work out their face shape, features and overall vibe, then read the hair itself. Only after both do you pick the THREE styles from the catalogue below that would genuinely suit them best.
@@ -688,9 +737,11 @@ Then pick the THREE hair colours from the colour catalogue below that would suit
 
 ## COLOUR CATALOGUE (you may ONLY recommend ids from this list)
 ${colorCatalogue.map(c => `- ${c.id}: ${c.nameKo} — ${c.description}`).join('\n')}
+${buildConsultContext(consult)}
 
 ## RULES
 - Recommend exactly three styles and exactly three colours, best match first, and never repeat an id.
+- Where something the client told us rules a style out, it is out — say so in "reason" when their answer is what decided the pick.
 - Base the choice on the client's actual face shape, proportions, features, hair and undertone — not on which styles or colours are generally popular.
 - Weigh the hair reading as heavily as the face shape. Where the hair is what decides it, say so in "reason".
 - Write "reason", "faceNote", "hairNote" and "colorNote" in warm, natural, conversational Korean, as if speaking directly to the client. One sentence each.
@@ -719,11 +770,24 @@ const handleRecommend = async (
   userImage: RegExpMatchArray,
   styles: HairStyle[],
   colors: HairColor[],
-  gender: unknown
+  gender: unknown,
+  rawConsult: unknown
 ) => {
   const catalogue = styles.filter(s => s.gender === (gender === 'male' ? 'male' : 'female'));
   // 'natural'은 "염색 안함"이라 추천 대상이 아니다.
   const colorCatalogue = colors.filter(c => c.id !== 'natural');
+
+  // 배열·문자열도 프로퍼티 접근이 되므로 순수 객체일 때만 읽는다.
+  const answers =
+    rawConsult && typeof rawConsult === 'object' && !Array.isArray(rawConsult)
+      ? (rawConsult as Record<string, unknown>)
+      : {};
+
+  const consult: ConsultAnswers = {
+    stylingTime: isStylingTime(answers.stylingTime) ? answers.stylingTime : 'any',
+    lengthPlan: isLengthPlan(answers.lengthPlan) ? answers.lengthPlan : 'any',
+    formality: isFormality(answers.formality) ? answers.formality : 'any',
+  };
 
   const response = await getClient(apiKey).models.generateContent({
     model: TEXT_MODEL,
@@ -732,7 +796,7 @@ const handleRecommend = async (
         role: 'user',
         parts: [
           { inlineData: { mimeType: userImage[1], data: userImage[2] } },
-          { text: buildRecommendPrompt(catalogue, colorCatalogue) },
+          { text: buildRecommendPrompt(catalogue, colorCatalogue, consult) },
         ],
       },
     ],
@@ -806,6 +870,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     hairTexture?: unknown;
     crownVolume?: unknown;
     adjustments?: unknown;
+    consult?: unknown;
   };
   try {
     body = (await readBody(req)) as typeof body;
@@ -866,7 +931,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   if (body.action === 'recommend') {
     try {
-      await handleRecommend(res, apiKey, userImageMatch, data.styles, data.colors, body.gender);
+      await handleRecommend(
+        res,
+        apiKey,
+        userImageMatch,
+        data.styles,
+        data.colors,
+        body.gender,
+        body.consult
+      );
     } catch (err) {
       console.error('Recommendation failed:', err);
       sendJson(res, 500, { error: '추천에 실패했습니다.' });

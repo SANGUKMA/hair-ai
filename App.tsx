@@ -21,7 +21,11 @@ import {
   StyleAdjustments,
   NO_ADJUSTMENTS,
   sameAdjustments,
+  ConsultAnswers,
+  NO_CONSULT,
+  sameConsult,
 } from './types';
+import { ConsultQuestions } from './components/ConsultQuestions';
 import { hairstyles } from './data/hairstyles';
 import { hairColors } from './data/hairColors';
 
@@ -47,6 +51,10 @@ const App: React.FC = () => {
   const [appliedAdjustments, setAppliedAdjustments] = useState<StyleAdjustments>(NO_ADJUSTMENTS);
   const [identityWarning, setIdentityWarning] = useState(false);
 
+  // 상담 답변도 같은 방식이다. 고치는 건 공짜고, 다시 추천받을지는 회원이 정한다.
+  const [consult, setConsult] = useState<ConsultAnswers>(NO_CONSULT);
+  const [appliedConsult, setAppliedConsult] = useState<ConsultAnswers>(NO_CONSULT);
+
   const [recommendation, setRecommendation] = useState<RecommendResult | null>(null);
   const [isRecommending, setIsRecommending] = useState(false);
   // 성별을 오갈 때 같은 사진으로 반복 호출하지 않도록 성별별 결과를 캐시한다.
@@ -56,7 +64,9 @@ const App: React.FC = () => {
   const recommendedIds = new Set(recommendation?.recommendations.map(r => r.styleId));
   const recommendedColorIds = new Set(recommendation?.colorRecommendations?.map(r => r.colorId));
 
-  const requestRecommendation = useCallback(async (image: string, target: Gender) => {
+  // 상담 답변은 인자로 받는다. 클로저로 잡으면 방금 바꾼 답변 대신 이전 값이 나간다.
+  const requestRecommendation = useCallback(
+    async (image: string, target: Gender, answers: ConsultAnswers) => {
     const cached = recommendCache.current.get(target);
     if (cached) {
       setRecommendation(cached);
@@ -65,9 +75,10 @@ const App: React.FC = () => {
     setIsRecommending(true);
     setRecommendation(null);
     try {
-      const result = await recommendStyles(image, target);
+      const result = await recommendStyles(image, target, answers);
       recommendCache.current.set(target, result);
       setRecommendation(result);
+      setAppliedConsult(answers);
     } catch (err) {
       // 추천은 부가 기능이라 실패해도 스타일을 직접 고르면 된다. 화면을 막지 않는다.
       // 다만 코드가 거부됐다면 더 진행할 수 없으므로 입력 화면으로 되돌린다.
@@ -76,19 +87,28 @@ const App: React.FC = () => {
     } finally {
       setIsRecommending(false);
     }
-  }, []);
+    },
+    []
+  );
 
   const handleUserImage = (image: string) => {
     recommendCache.current.clear();
     setUserImage(image);
-    requestRecommendation(image, gender);
+    requestRecommendation(image, gender, consult);
   };
 
   const handleGenderChange = (next: Gender) => {
     setGender(next);
     setStyleCategory('cut');
     setSelectedStyle(null);
-    if (userImage) requestRecommendation(userImage, next);
+    if (userImage) requestRecommendation(userImage, next, consult);
+  };
+
+  // 답변이 바뀌면 성별별로 캐시해 둔 이전 추천은 전부 무효다.
+  const handleRerecommend = () => {
+    if (!userImage) return;
+    recommendCache.current.clear();
+    requestRecommendation(userImage, gender, consult);
   };
 
   // 추천 카드에서 고른 스타일이 아래 그리드에도 보이도록 카테고리 탭을 맞춰준다.
@@ -216,6 +236,9 @@ const App: React.FC = () => {
                 onCameraClick={() => setShowCamera(true)}
                 isActive={!userImage}
               />
+              <div className="mt-3">
+                <ConsultQuestions answers={consult} onChange={setConsult} />
+              </div>
             </div>
 
             {/* Step 2: Style Selection - always visible */}
@@ -229,6 +252,8 @@ const App: React.FC = () => {
                 isLoading={isRecommending}
                 selectedStyleId={selectedStyle?.id}
                 onStyleSelected={handleRecommendedStyle}
+                consultChanged={!sameConsult(consult, appliedConsult)}
+                onRerecommend={handleRerecommend}
               />
 
               {/* Gender Tabs */}
