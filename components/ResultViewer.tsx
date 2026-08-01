@@ -16,6 +16,8 @@ interface ResultViewerProps {
   onRegenerate: () => void;
   onChangeStyle: () => void;
   onSave: () => void;
+  onSaveReport: () => void;
+  isSavingReport: boolean;
   onReset: () => void;
 }
 
@@ -31,6 +33,8 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
   onRegenerate,
   onChangeStyle,
   onSave,
+  onSaveReport,
+  isSavingReport,
   onReset
 }) => {
   const [sliderPosition, setSliderPosition] = useState(50);
@@ -172,19 +176,23 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
           다른 스타일
         </button>
         <button
-          onClick={onSave}
-          className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-200 hover:shadow-purple-300 transition-all active:scale-95"
+          onClick={onSaveReport}
+          disabled={isSavingReport}
+          className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-200 hover:shadow-purple-300 transition-all active:scale-95 disabled:opacity-60"
         >
-          저장하기
+          {isSavingReport ? '만드는 중...' : '리포트 받기'}
         </button>
       </div>
 
-      <button
-        onClick={onReset}
-        className="mt-3 mb-8 mx-auto block text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2"
-      >
-        처음부터 다시
-      </button>
+      <div className="mt-3 mb-8 flex items-center justify-center gap-3 text-xs text-gray-400">
+        <button onClick={onSave} className="underline underline-offset-2 hover:text-gray-600">
+          사진만 받기
+        </button>
+        <span>·</span>
+        <button onClick={onReset} className="underline underline-offset-2 hover:text-gray-600">
+          처음부터 다시
+        </button>
+      </div>
     </div>
   );
 };

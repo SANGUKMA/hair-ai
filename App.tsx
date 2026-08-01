@@ -26,6 +26,7 @@ import {
   sameConsult,
 } from './types';
 import { ConsultQuestions } from './components/ConsultQuestions';
+import { deliverImage, renderReport } from './utils/report';
 import { hairstyles } from './data/hairstyles';
 import { hairColors } from './data/hairColors';
 
@@ -50,6 +51,7 @@ const App: React.FC = () => {
   const [adjustments, setAdjustments] = useState<StyleAdjustments>(NO_ADJUSTMENTS);
   const [appliedAdjustments, setAppliedAdjustments] = useState<StyleAdjustments>(NO_ADJUSTMENTS);
   const [identityWarning, setIdentityWarning] = useState(false);
+  const [isSavingReport, setIsSavingReport] = useState(false);
 
   // 상담 답변도 같은 방식이다. 고치는 건 공짜고, 다시 추천받을지는 회원이 정한다.
   const [consult, setConsult] = useState<ConsultAnswers>(NO_CONSULT);
@@ -189,12 +191,35 @@ const App: React.FC = () => {
 
   const handleSave = () => {
     if (!resultImage) return;
-    const link = document.createElement('a');
-    link.href = resultImage;
-    link.download = `hairfit-ai-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const ext = resultImage.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+    deliverImage(resultImage, `hairfit-ai-${Date.now()}.${ext}`);
+  };
+
+  // 리포트는 전부 브라우저에서 그린다. 얼굴 사진과 진단이 서버를 거치지 않는다.
+  const handleSaveReport = async () => {
+    if (!userImage || !resultImage || !selectedStyle) return;
+    setIsSavingReport(true);
+    setError(null);
+    try {
+      const report = await renderReport({
+        originalImage: userImage,
+        resultImage,
+        recommendation,
+        styles: hairstyles,
+        colors: hairColors,
+        selectedStyle,
+        selectedColor,
+        stylistComment,
+        consult,
+        identityWarning,
+      });
+      await deliverImage(report, `hairfit-report-${Date.now()}.jpg`);
+    } catch (err) {
+      console.error('리포트 생성 실패:', err);
+      setError('리포트를 만들지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsSavingReport(false);
+    }
   };
 
   const isReady = userImage && selectedStyle;
@@ -450,6 +475,8 @@ const App: React.FC = () => {
               onRegenerate={handleGenerate}
               onChangeStyle={handleChangeStyle}
               onSave={handleSave}
+              onSaveReport={handleSaveReport}
+              isSavingReport={isSavingReport}
               onReset={handleReset}
             />
           </div>

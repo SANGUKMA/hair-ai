@@ -1,13 +1,7 @@
 import React from 'react';
 import { HairColor, PersonalColor, RecommendResult } from '../types';
 import { ColorSwatch } from './ColorSwatch';
-
-const SEASON_LABEL: Record<PersonalColor, string> = {
-  'spring-warm': '봄 웜톤',
-  'summer-cool': '여름 쿨톤',
-  'autumn-warm': '가을 웜톤',
-  'winter-cool': '겨울 쿨톤',
-};
+import { PERSONAL_COLOR_LABEL } from '../data/labels';
 
 // 배지 색은 장식이 아니라 진단 결과 자체다. 계절의 인상을 그대로 쓴다.
 const SEASON_BADGE: Record<PersonalColor, string> = {
@@ -61,7 +55,7 @@ export const ColorRecommendation: React.FC<ColorRecommendationProps> = ({
           <span
             className={`inline-flex items-center bg-gradient-to-r ${SEASON_BADGE[season]} text-white text-[10px] font-bold px-2 py-0.5 rounded-full`}
           >
-            {SEASON_LABEL[season]}
+            {PERSONAL_COLOR_LABEL[season]}
           </span>
         )}
         <p className="text-sm font-bold text-gray-800">퍼스널 컬러 진단</p>
