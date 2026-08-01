@@ -23,7 +23,7 @@ export const RecentStyles: React.FC<RecentStylesProps> = ({ entries, onPick, onR
   return (
     <div className="mb-5">
       <p className="text-xs font-bold text-gray-700 mb-2 ml-1 uppercase tracking-wider">
-        최근에 해보신 스타일
+        최근 시뮬레이션
       </p>
       <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
         {entries.map(entry => (

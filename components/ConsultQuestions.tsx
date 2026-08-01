@@ -44,8 +44,8 @@ const QUESTIONS: {
 export const ConsultQuestions: React.FC<ConsultQuestionsProps> = ({ answers, onChange }) => (
   <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
     <div className="flex items-baseline gap-2 mb-3">
-      <p className="text-sm font-bold text-gray-800">원장님께 미리 알려주세요</p>
-      <p className="text-[10px] text-gray-400">선택 · 답하시면 추천이 정확해져요</p>
+      <p className="text-sm font-bold text-gray-800">고객님께 여쭤보세요</p>
+      <p className="text-[10px] text-gray-400">선택 · 입력하시면 추천이 정확해져요</p>
     </div>
 
     <div className="space-y-2.5">

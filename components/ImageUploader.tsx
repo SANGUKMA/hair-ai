@@ -118,7 +118,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               </div>
               <div className="text-left">
                 <h3 className="text-sm font-semibold text-gray-900">촬영</h3>
-                <p className="text-[11px] text-gray-500">셀카로 바로 찍기</p>
+                <p className="text-[11px] text-gray-500">카메라로 바로 찍기</p>
               </div>
             </button>
           )}

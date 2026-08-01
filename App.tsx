@@ -330,9 +330,9 @@ const App: React.FC = () => {
 
             {/* Step 1: User Photo */}
             <div className="mb-5">
-              <p className="text-xs font-bold text-gray-700 mb-2 ml-1 uppercase tracking-wider">Step 1. 내 사진 업로드</p>
+              <p className="text-xs font-bold text-gray-700 mb-2 ml-1 uppercase tracking-wider">Step 1. 고객님 사진 등록</p>
               <ImageUploader
-                label="내 사진"
+                label="고객님 사진"
                 description="얼굴이 잘 보이는 정면 사진"
                 imageSrc={userImage}
                 onImageSelected={handleUserImage}
