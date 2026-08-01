@@ -96,7 +96,7 @@ const App: React.FC = () => {
         userImage,
         selectedStyle.id,
         selectedColor?.id,
-        recommendation?.faceShape
+        recommendation
       );
       setResultImage(result.image);
       setStylistComment(result.comment);

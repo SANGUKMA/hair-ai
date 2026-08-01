@@ -1,4 +1,4 @@
-import type { FaceShape, Gender, RecommendResult } from '../types';
+import type { Gender, HairDiagnosis, RecommendResult } from '../types';
 import { clearAccessCode, getAccessCode } from '../utils/accessCode';
 
 export interface GenerateResult {
@@ -51,10 +51,22 @@ export const recommendStyles = (userImage: string, gender: Gender): Promise<Reco
 
 // API 키를 브라우저에 노출하지 않기 위해 /api/generate 서버리스 함수를 경유한다.
 // 프롬프트 구성과 스타일 이미지 로딩은 모두 서버(api/generate.ts)에서 처리한다.
+// 진단 결과는 필드를 골라서 보낸다. RecommendResult를 통째로 펼치면 추천 목록까지
+// 요청 본문에 실려 나가는데, 서버가 쓰지도 않는 데이터다.
 export const generateHairstyle = (
   userImage: string,
   styleId: string,
   colorId?: string,
-  faceShape?: FaceShape | null
+  diagnosis?: HairDiagnosis | null
 ): Promise<GenerateResult> =>
-  postJson({ action: 'generate', userImage, styleId, colorId, faceShape });
+  postJson({
+    action: 'generate',
+    userImage,
+    styleId,
+    colorId,
+    faceShape: diagnosis?.faceShape,
+    hairThickness: diagnosis?.hairThickness,
+    hairDensity: diagnosis?.hairDensity,
+    hairTexture: diagnosis?.hairTexture,
+    crownVolume: diagnosis?.crownVolume,
+  });

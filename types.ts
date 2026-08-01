@@ -41,6 +41,22 @@ export type FaceShape = 'oval' | 'round' | 'square' | 'heart' | 'long' | 'diamon
 // 폰으로 찍은 사진 한 장으로 판단하는 이 앱에서는 4분류까지만 다룬다.
 export type PersonalColor = 'spring-warm' | 'summer-cool' | 'autumn-warm' | 'winter-cool';
 
+// 모발·두상 특성. 근거가 정면 사진 한 장뿐이라 여기서 읽어낼 수 있는 것만 다룬다.
+// 뒤통수 납작함은 미용에서 중요하지만 정면에서는 보이지 않아 제외했다 — 물으면 지어낸다.
+export type HairThickness = 'fine' | 'medium' | 'thick';   // 한 가닥의 굵기
+export type HairDensity = 'sparse' | 'medium' | 'dense';   // 숱(모량)
+export type HairTexture = 'straight' | 'wavy' | 'curly';   // 곱슬기
+export type CrownVolume = 'flat' | 'medium' | 'full';      // 정수리 볼륨
+
+// 추천 단계에서 진단한 값을 생성 단계로 그대로 넘겨 시뮬레이션에 반영한다.
+export interface HairDiagnosis {
+  faceShape: FaceShape | null;
+  hairThickness: HairThickness | null;
+  hairDensity: HairDensity | null;
+  hairTexture: HairTexture | null;
+  crownVolume: CrownVolume | null;
+}
+
 export interface StyleRecommendation {
   styleId: string;
   reason: string;        // 이 스타일이 어울리는 이유 (한국어 한 문장)
@@ -51,9 +67,9 @@ export interface ColorRecommendation {
   reason: string;        // 이 컬러가 어울리는 이유 (한국어 한 문장)
 }
 
-export interface RecommendResult {
-  faceShape: FaceShape | null;
+export interface RecommendResult extends HairDiagnosis {
   faceNote: string;      // 얼굴형/특징 요약 (한국어 한 문장)
+  hairNote: string;      // 모발/두상 소견 (한국어 한 문장)
   recommendations: StyleRecommendation[];
   personalColor: PersonalColor | null;
   colorNote: string;     // 퍼스널 컬러 진단 요약 (한국어 한 문장)

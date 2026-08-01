@@ -45,8 +45,15 @@ export const StyleRecommendation: React.FC<StyleRecommendationProps> = ({
         <p className="text-sm font-bold text-gray-800">원장이 골라본 스타일</p>
       </div>
 
-      {result.faceNote && (
-        <p className="text-xs text-gray-600 leading-relaxed mb-3">{result.faceNote}</p>
+      {(result.faceNote || result.hairNote) && (
+        <div className="mb-3 space-y-1">
+          {result.faceNote && (
+            <p className="text-xs text-gray-600 leading-relaxed">{result.faceNote}</p>
+          )}
+          {result.hairNote && (
+            <p className="text-xs text-gray-600 leading-relaxed">{result.hairNote}</p>
+          )}
+        </div>
       )}
 
       <div className="grid grid-cols-3 gap-2.5">

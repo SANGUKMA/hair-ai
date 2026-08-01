@@ -2,7 +2,17 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { GoogleGenAI, Type } from '@google/genai';
-import type { FaceShape, HairColor, HairStyle, PersonalColor } from '../types';
+import type {
+  CrownVolume,
+  FaceShape,
+  HairColor,
+  HairDensity,
+  HairDiagnosis,
+  HairStyle,
+  HairTexture,
+  HairThickness,
+  PersonalColor,
+} from '../types';
 
 // 이 파일에는 상대경로 '값' import를 두지 않는다. package.json이 "type": "module"이라
 // 배포된 함수는 ESM으로 로드되고, ESM은 확장자 없는 상대경로를 해석하지 못해
@@ -133,13 +143,53 @@ const FACE_SHAPE_GUIDANCE: Record<FaceShape, string> = {
   diamond: 'Add volume at the forehead and around the jaw to balance prominent cheekbones. Keep the width at cheek level soft rather than full.',
 };
 
-const isFaceShape = (v: unknown): v is FaceShape =>
-  typeof v === 'string' && (FACE_SHAPES as readonly string[]).includes(v);
+// 모델이 목록에 없는 값을 지어낼 수 있어 진단 결과는 전부 이 가드를 통과시킨 뒤 쓴다.
+const oneOf =
+  <T extends string>(values: readonly T[]) =>
+  (v: unknown): v is T =>
+    typeof v === 'string' && (values as readonly string[]).includes(v);
+
+const isFaceShape = oneOf(FACE_SHAPES);
 
 const PERSONAL_COLORS = ['spring-warm', 'summer-cool', 'autumn-warm', 'winter-cool'] as const;
+const isPersonalColor = oneOf(PERSONAL_COLORS);
 
-const isPersonalColor = (v: unknown): v is PersonalColor =>
-  typeof v === 'string' && (PERSONAL_COLORS as readonly string[]).includes(v);
+// 모발·두상 진단. 정면 사진에서 읽히는 축만 둔다(뒤통수는 보이지 않아 제외).
+const HAIR_THICKNESSES = ['fine', 'medium', 'thick'] as const;
+const HAIR_DENSITIES = ['sparse', 'medium', 'dense'] as const;
+const HAIR_TEXTURES = ['straight', 'wavy', 'curly'] as const;
+const CROWN_VOLUMES = ['flat', 'medium', 'full'] as const;
+
+const isHairThickness = oneOf(HAIR_THICKNESSES);
+const isHairDensity = oneOf(HAIR_DENSITIES);
+const isHairTexture = oneOf(HAIR_TEXTURES);
+const isCrownVolume = oneOf(CROWN_VOLUMES);
+
+// 모발 특성별 생성 지침. 얼굴형과 같은 방식으로, 참조 사진을 그대로 베끼는 대신
+// 이 고객의 실제 모발에 맞춰 조정하게 만든다.
+const HAIR_THICKNESS_GUIDANCE: Record<HairThickness, string> = {
+  fine: 'Individual strands are fine. Ends should read soft and wispy, and the silhouette should stay light — never render coarse, heavy-looking hair on this client.',
+  medium: 'Average strand thickness — no special compensation needed.',
+  thick: 'Individual strands are coarse and strong. The cut holds its shape with real body, and ends read blunter unless the style is texturised.',
+};
+
+const HAIR_DENSITY_GUIDANCE: Record<HairDensity, string> = {
+  sparse: 'The client does not have thick hair. Do NOT give them a full head of hair they do not have — keep the amount of hair close to Image 1 and let the CUT create the impression of fullness. Inventing density is as much an identity failure as reshaping the face.',
+  medium: 'Average density — render the style as it normally sits.',
+  dense: 'The client has a lot of hair. Render the style with genuine fullness, and remove internal weight where the style would otherwise balloon into a triangular silhouette.',
+};
+
+const HAIR_TEXTURE_GUIDANCE: Record<HairTexture, string> = {
+  straight: 'The natural hair is straight. If the requested style is a perm or waves, render it as a fresh salon perm on straight hair, not as naturally curly hair.',
+  wavy: 'The natural hair has a soft wave. If the requested style needs a smooth finish, render it as properly blow-dried rather than as a different hair type.',
+  curly: 'The natural hair is strongly curly. If the requested style is smooth or straight, render it as professionally straightened hair — keep the strand character, do not swap in someone else\'s hair type.',
+};
+
+const CROWN_VOLUME_GUIDANCE: Record<CrownVolume, string> = {
+  flat: 'The crown sits flat. Lift the hair at the crown so the head shape reads balanced.',
+  medium: 'Crown height is balanced — keep it as it is.',
+  full: 'The crown already has natural height. Do not add volume there, or the head will read too large for the face.',
+};
 
 // 피부 보정 강도. 세게 밀수록 "예쁘지만 다른 사람"으로 넘어갈 위험이 커지므로
 // 코드 수정 없이 되돌릴 수 있게 환경변수로 뺐다.
@@ -189,20 +239,38 @@ All of that definition must come from LIGHTING ONLY. Never move, slim or reshape
 const buildPrompt = (
   style: HairStyle,
   color?: HairColor,
-  faceShape?: FaceShape,
+  diagnosis: Partial<HairDiagnosis> = {},
   retouch: RetouchLevel = RETOUCH_LEVEL
 ) => {
+  const { faceShape, hairThickness, hairDensity, hairTexture, crownVolume } = diagnosis;
+
   const faceContext = faceShape
     ? `
 Client face shape: ${faceShape}
 Styling adjustment for this face shape: ${FACE_SHAPE_GUIDANCE[faceShape]}`
     : '';
 
+  // 판정된 축만 넣는다. 진단이 안 된 축은 언급하지 않는 편이 낫다 — 빈 값을 알리면
+  // 모델이 거기에 대해 뭔가 지어내기 시작한다.
+  const hairLines = [
+    hairThickness && `- Strand thickness (${hairThickness}): ${HAIR_THICKNESS_GUIDANCE[hairThickness]}`,
+    hairDensity && `- Density (${hairDensity}): ${HAIR_DENSITY_GUIDANCE[hairDensity]}`,
+    hairTexture && `- Natural texture (${hairTexture}): ${HAIR_TEXTURE_GUIDANCE[hairTexture]}`,
+    crownVolume && `- Crown volume (${crownVolume}): ${CROWN_VOLUME_GUIDANCE[crownVolume]}`,
+  ].filter(Boolean);
+
+  const hairContext = hairLines.length
+    ? `
+
+The client's own hair — this is the hair you are replacing, and the result must stay true to it:
+${hairLines.join('\n')}`
+    : '';
+
   const styleContext = `
 The requested hairstyle is "${style.nameKo}" (${style.name}).
 Style characteristics: ${style.description}
 Style keywords: ${style.tags.join(', ')}
-Client gender: ${style.gender === 'female' ? 'Female' : 'Male'}${faceContext}`;
+Client gender: ${style.gender === 'female' ? 'Female' : 'Male'}${faceContext}${hairContext}`;
 
   const colorContext = color
     ? `
@@ -253,7 +321,7 @@ If the retouching ever starts to change WHO the person is, stop and keep the ori
 ### What to change:
 1. Remove/replace the client's current hair with the hairstyle shown in Image 2
 2. Take Image 2 as the DIRECTION — its shape, layering, volume, curl pattern and length — NOT as a template to copy strand for strand
-3. Adapt that style to THIS client the way a real salon director would: tune the length, where the volume sits, the parting and the face-framing pieces so the cut genuinely flatters their face shape, head size and proportions${faceShape ? '. Follow the styling adjustment given for their face shape above' : ''}
+3. Adapt that style to THIS client the way a real salon director would: tune the length, where the volume sits, the parting and the face-framing pieces so the cut genuinely flatters their face shape, head size and proportions${faceContext || hairContext ? '. Follow the client-specific adjustments listed above — the reference photo shows a different person with different hair' : ''}
 4. The finished cut must look like it was cut FOR this person, not pasted on from someone else's photo
 
 ### Natural hair integration:
@@ -291,6 +359,15 @@ const RECOMMEND_SCHEMA = {
     faceNote: {
       type: Type.STRING,
       description: 'One short Korean sentence describing the face shape and features, addressed to the client.',
+    },
+    hairThickness: { type: Type.STRING, enum: [...HAIR_THICKNESSES] },
+    hairDensity: { type: Type.STRING, enum: [...HAIR_DENSITIES] },
+    hairTexture: { type: Type.STRING, enum: [...HAIR_TEXTURES] },
+    crownVolume: { type: Type.STRING, enum: [...CROWN_VOLUMES] },
+    hairNote: {
+      type: Type.STRING,
+      description:
+        'One short Korean sentence on the hair itself — thickness, density, texture and crown volume — addressed to the client.',
     },
     recommendations: {
       type: Type.ARRAY,
@@ -333,6 +410,11 @@ const RECOMMEND_SCHEMA = {
   required: [
     'faceShape',
     'faceNote',
+    'hairThickness',
+    'hairDensity',
+    'hairTexture',
+    'crownVolume',
+    'hairNote',
     'recommendations',
     'personalColor',
     'colorNote',
@@ -351,7 +433,16 @@ const buildRecommendPrompt = (
   colorCatalogue: HairColor[]
 ) => `You are an experienced Korean salon director recommending haircuts and hair colour.
 
-Look at the client's photo and work out their face shape, features and overall vibe. Then pick the THREE styles from the catalogue below that would genuinely suit them best.
+Look at the client's photo and work out their face shape, features and overall vibe, then read the hair itself. Only after both do you pick the THREE styles from the catalogue below that would genuinely suit them best.
+
+## THE CLIENT'S HAIR
+Judge each of these from the photo. They decide as much as face shape does — a cut that lives on body and movement will fall flat on fine, sparse hair no matter how well it suits the face.
+- hairThickness — how thick one single strand is (fine / medium / thick)
+- hairDensity — how much hair there is overall (sparse / medium / dense)
+- hairTexture — the natural texture underneath any styling (straight / wavy / curly)
+- crownVolume — how much height sits at the crown (flat / medium / full)
+
+If the hair is tied back, heavily styled or partly out of frame, judge from what you can actually see rather than guessing.
 
 ## CATALOGUE (you may ONLY recommend ids from this list)
 ${catalogue.map(s => `- ${s.id}: ${s.nameKo} (${s.category === 'cut' ? '컷' : '펌'}) — ${s.description} [${s.tags.join(', ')}]`).join('\n')}
@@ -367,8 +458,10 @@ ${colorCatalogue.map(c => `- ${c.id}: ${c.nameKo} — ${c.description}`).join('\
 
 ## RULES
 - Recommend exactly three styles and exactly three colours, best match first, and never repeat an id.
-- Base the choice on the client's actual face shape, proportions, features and undertone — not on which styles or colours are generally popular.
-- Write "reason", "faceNote" and "colorNote" in warm, natural, conversational Korean, as if speaking directly to the client. One sentence each.
+- Base the choice on the client's actual face shape, proportions, features, hair and undertone — not on which styles or colours are generally popular.
+- Weigh the hair reading as heavily as the face shape. Where the hair is what decides it, say so in "reason".
+- Write "reason", "faceNote", "hairNote" and "colorNote" in warm, natural, conversational Korean, as if speaking directly to the client. One sentence each.
+- Keep "hairNote" practical and kind — describe the hair as something to work with, never as a flaw.
 - In "colorNote", name the season in Korean (봄 웜톤 / 여름 쿨톤 / 가을 웜톤 / 겨울 쿨톤) and say in one line what it means for their hair colour.
 - Judge the undertone only. Do NOT describe the client's skin as light or dark, and do NOT mention or infer ethnicity.
 - Do NOT use hashtags, emojis, or English words in the Korean text.
@@ -437,12 +530,19 @@ const handleRecommend = async (
     new Set(colorCatalogue.map(c => c.id))
   );
 
+  const note = (v: unknown) => (typeof v === 'string' ? v : '');
+
   sendJson(res, 200, {
     faceShape: isFaceShape(parsed.faceShape) ? parsed.faceShape : null,
-    faceNote: typeof parsed.faceNote === 'string' ? parsed.faceNote : '',
+    faceNote: note(parsed.faceNote),
+    hairThickness: isHairThickness(parsed.hairThickness) ? parsed.hairThickness : null,
+    hairDensity: isHairDensity(parsed.hairDensity) ? parsed.hairDensity : null,
+    hairTexture: isHairTexture(parsed.hairTexture) ? parsed.hairTexture : null,
+    crownVolume: isCrownVolume(parsed.crownVolume) ? parsed.crownVolume : null,
+    hairNote: note(parsed.hairNote),
     recommendations,
     personalColor: isPersonalColor(parsed.personalColor) ? parsed.personalColor : null,
-    colorNote: typeof parsed.colorNote === 'string' ? parsed.colorNote : '',
+    colorNote: note(parsed.colorNote),
     colorRecommendations,
   });
 };
@@ -468,6 +568,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     colorId?: unknown;
     gender?: unknown;
     faceShape?: unknown;
+    hairThickness?: unknown;
+    hairDensity?: unknown;
+    hairTexture?: unknown;
+    crownVolume?: unknown;
   };
   try {
     body = (await readBody(req)) as typeof body;
@@ -548,6 +652,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       ? data.colors.find(c => c.id === body.colorId)
       : undefined;
 
+  // 진단 값은 클라이언트가 보낸 자유 문자열이다. 고정 목록으로 검증한 것만 프롬프트에 넣어
+  // 임의의 문자열이 지시문에 섞이지 않게 한다.
+  const diagnosis: Partial<HairDiagnosis> = {
+    faceShape: isFaceShape(body.faceShape) ? body.faceShape : undefined,
+    hairThickness: isHairThickness(body.hairThickness) ? body.hairThickness : undefined,
+    hairDensity: isHairDensity(body.hairDensity) ? body.hairDensity : undefined,
+    hairTexture: isHairTexture(body.hairTexture) ? body.hairTexture : undefined,
+    crownVolume: isCrownVolume(body.crownVolume) ? body.crownVolume : undefined,
+  };
+
   try {
     const styleImage = await loadStyleImage(style);
     const response = await getClient(apiKey).models.generateContent({
@@ -558,9 +672,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           parts: [
             { inlineData: { mimeType: userImageMatch[1], data: userImageMatch[2] } },
             { inlineData: { mimeType: styleImage.mimeType, data: styleImage.data } },
-            // faceShape는 고정 목록으로 검증한 값만 쓴다. 클라이언트가 보낸 자유 문자열이
-            // 프롬프트에 그대로 섞이지 않도록 하기 위함이다.
-            { text: buildPrompt(style, color, isFaceShape(body.faceShape) ? body.faceShape : undefined) },
+            { text: buildPrompt(style, color, diagnosis) },
           ],
         },
       ],
