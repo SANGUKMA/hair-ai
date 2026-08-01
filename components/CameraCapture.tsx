@@ -18,6 +18,9 @@ const LIGHTING_HINT: Record<Exclude<Lighting, 'unknown'>, { text: string; tone: 
 
 const SAMPLE_SIZE = 64;
 
+// utils/image.ts의 MAX_DIMENSION과 같은 값. 업로드와 촬영이 같은 크기로 서버에 가야 한다.
+const MAX_CAPTURE_SIZE = 1024;
+
 // 가운데 절반을 얼굴(가이드 타원 안쪽), 바깥 테두리를 배경으로 보고 판정한다.
 // RGBA 픽셀 배열만 받는 순수 함수라 브라우저 없이도 검증할 수 있다.
 export const classifyLighting = (data: Uint8ClampedArray | number[], size: number): Lighting => {
@@ -91,8 +94,10 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose
         // 기본 확대 상태로 열리는 것을 막아준다.
         video: {
           facingMode: facing,
-          width: { ideal: 640 },
-          height: { ideal: 480 },
+          // 얼굴을 편집하는 작업이라 화질이 곧 결과 품질이다. 카메라가 줄 수 있는 만큼
+          // 크게 받고, 저장할 때 업로드 경로와 같은 상한으로 줄인다.
+          width: { ideal: 1440 },
+          height: { ideal: 1440 },
           zoom: { ideal: 1 },
         } as MediaTrackConstraints,
         audio: false,
@@ -134,7 +139,10 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
-    const size = Math.min(video.videoWidth, video.videoHeight);
+    // 원본에서 정사각형으로 잘라내되, 저장 크기는 utils/image.ts의 업로드 상한과 맞춘다.
+    // 여기만 작으면 직접 찍은 사진이 갤러리에서 고른 사진보다 나쁜 결과를 받게 된다.
+    const source = Math.min(video.videoWidth, video.videoHeight);
+    const size = Math.min(source, MAX_CAPTURE_SIZE);
     canvas.width = size;
     canvas.height = size;
 
@@ -142,8 +150,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose
     if (!ctx) return;
 
     // Center crop to square
-    const sx = (video.videoWidth - size) / 2;
-    const sy = (video.videoHeight - size) / 2;
+    const sx = (video.videoWidth - source) / 2;
+    const sy = (video.videoHeight - source) / 2;
 
     // Mirror for front camera
     if (facingMode === 'user') {
@@ -151,7 +159,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose
       ctx.scale(-1, 1);
     }
 
-    ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
+    ctx.drawImage(video, sx, sy, source, source, 0, 0, size, size);
     const base64 = canvas.toDataURL('image/jpeg', 0.9);
 
     stopCamera();

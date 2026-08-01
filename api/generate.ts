@@ -52,20 +52,27 @@ const MEMBER_CODES = new Set(
 
 const DAILY_LIMIT = Number(process.env.DAILY_LIMIT_PER_CODE) || 20;
 
+// 추천은 사진을 올리면 자동으로 도는 거라 회원이 "쓴" 횟수가 아니다. 생성 한도에서
+// 같이 깎으면 "하루 20번"이라고 안내하고 실제로는 절반만 주게 된다. 그래서 따로 센다.
+// 다만 무제한으로 두면 코드가 새어나갔을 때 추천만으로도 예산이 나가므로 별도 상한을 둔다.
+const RECOMMEND_LIMIT = Number(process.env.DAILY_RECOMMEND_LIMIT) || DAILY_LIMIT * 2;
+
 // 서버리스는 인스턴스마다 메모리가 따로라 이 카운터는 정확하지 않다.
 // 정확한 제한이 아니라, 코드 하나가 새어나갔을 때 한 번에 예산을 태우는 걸
 // 늦추기 위한 최소 방어선이다. 정확히 하려면 외부 저장소(KV)가 필요하다.
 const usage = new Map<string, { day: string; count: number }>();
 
-const exceedsDailyLimit = (code: string): boolean => {
+const exceedsDailyLimit = (code: string, kind: 'generate' | 'recommend'): boolean => {
   const day = new Date().toISOString().slice(0, 10);
-  const entry = usage.get(code);
+  const limit = kind === 'generate' ? DAILY_LIMIT : RECOMMEND_LIMIT;
+  const key = `${kind}:${code}`;
+  const entry = usage.get(key);
   if (!entry || entry.day !== day) {
-    usage.set(code, { day, count: 1 });
+    usage.set(key, { day, count: 1 });
     return false;
   }
   entry.count += 1;
-  return entry.count > DAILY_LIMIT;
+  return entry.count > limit;
 };
 
 const MAX_BODY_BYTES = 6 * 1024 * 1024;
@@ -902,10 +909,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
-  if (exceedsDailyLimit(accessCode)) {
-    console.warn(`[usage] code=${accessCode} exceeded the daily limit of ${DAILY_LIMIT}`);
+  const kind = body.action === 'recommend' ? 'recommend' : 'generate';
+
+  if (exceedsDailyLimit(accessCode, kind)) {
+    console.warn(`[usage] code=${accessCode} exceeded the daily ${kind} limit`);
     sendJson(res, 429, {
-      error: `오늘 사용 가능한 횟수(${DAILY_LIMIT}회)를 모두 사용하셨습니다. 내일 다시 이용해주세요.`,
+      error:
+        kind === 'generate'
+          ? `오늘 사용 가능한 횟수(${DAILY_LIMIT}회)를 모두 사용하셨습니다. 내일 다시 이용해주세요.`
+          : '추천 요청이 많아 잠시 쉬어갑니다. 스타일은 아래에서 직접 고르실 수 있어요.',
     });
     return;
   }
@@ -918,7 +930,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   // 코드별 사용량은 로그로 남긴다. 어느 회원인지는 운영자의 명단에서만 확인된다.
-  console.log(`[usage] code=${accessCode} action=${body.action === 'recommend' ? 'recommend' : 'generate'}`);
+  console.log(`[usage] code=${accessCode} action=${kind}`);
 
   let data: { styles: HairStyle[]; colors: HairColor[] };
   try {

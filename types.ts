@@ -1,6 +1,5 @@
 export enum AppStep {
   HOME = 'HOME',
-  SELECT_STYLE = 'SELECT_STYLE',
   PROCESSING = 'PROCESSING',
   RESULT = 'RESULT'
 }
@@ -28,11 +27,6 @@ export interface HairColor {
   colorHexSecond?: string;  // 그라데이션 두 번째 색상 (선택)
   description: string;      // AI에 전달할 색상 상세 설명
   category: 'natural' | 'brown' | 'ash' | 'vivid' | 'highlight';
-}
-
-export interface GeneratedImageResult {
-  originalImage: string;
-  generatedImage: string;
 }
 
 export type FaceShape = 'oval' | 'round' | 'square' | 'heart' | 'long' | 'diamond';
