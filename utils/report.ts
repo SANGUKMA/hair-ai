@@ -13,6 +13,7 @@ import {
   HAIR_THICKNESS_LABEL,
   LENGTH_PLAN_LABEL,
   PERSONAL_COLOR_LABEL,
+  STYLE_UPKEEP_LABEL,
   STYLING_TIME_LABEL,
 } from '../data/labels';
 
@@ -377,8 +378,9 @@ export const renderReport = async (data: ReportData): Promise<string> => {
     let px = PAD + 24;
     px = drawPill(ctx, data.selectedStyle.nameKo, px, ry - 26, '#ede9fe', PURPLE);
     if (data.selectedColor && data.selectedColor.id !== 'natural') {
-      drawPill(ctx, data.selectedColor.nameKo, px, ry - 26, '#fce7f3', '#be185d');
+      px = drawPill(ctx, data.selectedColor.nameKo, px, ry - 26, '#fce7f3', '#be185d');
     }
+    drawPill(ctx, STYLE_UPKEEP_LABEL[data.selectedStyle.upkeep], px, ry - 26, '#f3f4f6', MUTED);
     ry += 26;
 
     if (commentLines.length) {

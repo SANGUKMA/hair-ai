@@ -1,5 +1,6 @@
 import React from 'react';
 import { HairStyle, RecommendResult } from '../types';
+import { STYLE_UPKEEP_LABEL } from '../data/labels';
 
 interface StyleRecommendationProps {
   result: RecommendResult | null;
@@ -91,7 +92,10 @@ export const StyleRecommendation: React.FC<StyleRecommendationProps> = ({
                 <h4 className="text-white font-bold text-[11px] leading-tight">{style.nameKo}</h4>
               </div>
             </div>
-            <p className="mt-1.5 text-[10px] text-gray-600 leading-snug line-clamp-3">{reason}</p>
+            <p className="mt-1 text-[9px] font-bold text-purple-500">
+              {STYLE_UPKEEP_LABEL[style.upkeep]}
+            </p>
+            <p className="mt-0.5 text-[10px] text-gray-600 leading-snug line-clamp-3">{reason}</p>
           </button>
         ))}
       </div>

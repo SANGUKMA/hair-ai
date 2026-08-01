@@ -8,6 +8,13 @@ export type Gender = 'female' | 'male';
 
 export type StyleCategory = 'cut' | 'perm';
 
+// 태그는 자유 문자열이라 걸러내기에도, 모델에게 근거를 주기에도 약하다.
+// 상담 답변을 실제로 강제하려면 고정된 축이 필요하다.
+// length는 "얼마나 잘라내는가"(기르는 중인 사람에게 권해도 되는지),
+// upkeep은 "아침에 손이 얼마나 가는가"를 뜻한다.
+export type StyleLength = 'short' | 'medium' | 'long';
+export type StyleUpkeep = 'low' | 'medium' | 'high';
+
 export interface HairStyle {
   id: string;
   name: string;
@@ -17,6 +24,8 @@ export interface HairStyle {
   category: StyleCategory;
   imagePath: string;
   tags: string[];
+  length: StyleLength;
+  upkeep: StyleUpkeep;
 }
 
 export interface HairColor {

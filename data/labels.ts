@@ -7,6 +7,8 @@ import type {
   HairThickness,
   LengthPlan,
   PersonalColor,
+  StyleLength,
+  StyleUpkeep,
   StylingTime,
 } from '../types';
 
@@ -51,6 +53,18 @@ export const CROWN_VOLUME_LABEL: Record<CrownVolume, string> = {
   flat: '정수리 볼륨 낮음',
   medium: '정수리 볼륨 보통',
   full: '정수리 볼륨 좋음',
+};
+
+export const STYLE_LENGTH_LABEL: Record<StyleLength, string> = {
+  short: '짧은 길이',
+  medium: '중간 길이',
+  long: '긴 길이',
+};
+
+export const STYLE_UPKEEP_LABEL: Record<StyleUpkeep, string> = {
+  low: '손질 쉬움',
+  medium: '손질 보통',
+  high: '매일 손질',
 };
 
 // 상담 답변. 'any'는 리포트에 적지 않으므로 라벨도 두지 않는다.

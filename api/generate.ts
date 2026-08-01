@@ -217,13 +217,13 @@ const isFormality = oneOf(FORMALITIES);
 // 대해 뭔가 가정하기 시작한다.
 const CONSULT_GUIDANCE: Record<string, string> = {
   'stylingTime:quick':
-    'They have five minutes at most in the morning. Do not recommend a cut that only works after a blow-dry, product or an iron — it has to fall right on its own once dry.',
+    'They have five minutes at most in the morning, so it has to fall right on its own once dry. Recommend ONLY styles marked upkeep=low.',
   'stylingTime:some':
-    'They will spend about ten minutes styling. A daily blow-dry is fine, but not a cut that needs an iron and product every single day.',
+    'They will spend about ten minutes styling. A daily blow-dry is fine. Do NOT recommend any style marked upkeep=high.',
   'lengthPlan:growing':
-    'They are growing their hair out. Do not recommend anything that takes off real length — favour shapes that work while growing, such as layers or a fringe.',
+    'They are growing their hair out, so a cut that sets them back is useless to them. Do NOT recommend any style marked length=short — favour shapes that work while growing, such as layers or a fringe.',
   'lengthPlan:shorter':
-    'They are happy to go noticeably shorter, so genuinely short cuts are on the table.',
+    'They are happy to go noticeably shorter, so styles marked length=short are welcome.',
   'formality:tidy':
     'They need to look tidy for work or school. Avoid dramatic, strongly asymmetric or obviously high-maintenance shapes.',
   'formality:free':
@@ -734,7 +734,10 @@ Judge each of these from the photo. They decide as much as face shape does — a
 If the hair is tied back, heavily styled or partly out of frame, judge from what you can actually see rather than guessing.
 
 ## CATALOGUE (you may ONLY recommend ids from this list)
-${catalogue.map(s => `- ${s.id}: ${s.nameKo} (${s.category === 'cut' ? '컷' : '펌'}) — ${s.description} [${s.tags.join(', ')}]`).join('\n')}
+${catalogue.map(s => `- ${s.id}: ${s.nameKo} (${s.category === 'cut' ? '컷' : '펌'}) — ${s.description} [length=${s.length}, upkeep=${s.upkeep}, ${s.tags.join(', ')}]`).join('\n')}
+
+"length" is how much hair the cut takes off, and "upkeep" is how much work it needs each
+morning. Use them literally when the client has told us something that depends on them.
 
 ## PERSONAL COLOUR
 Separately, diagnose which of the four personal colour seasons the client belongs to. Judge it from the UNDERTONE of their skin, and from how their skin, hair and eye colours sit against each other:
