@@ -224,6 +224,86 @@
     "upkeep": "medium"
   },
   {
+    "id": "w15",
+    "name": "Bob Perm",
+    "nameKo": "단발펌",
+    "description": "단발 길이에 부드러운 컬을 넣은 펌. 짧은 머리에도 볼륨과 움직임을 준다.",
+    "gender": "female",
+    "category": "perm",
+    "imagePath": "/styles/w15-bob-perm.png",
+    "tags": [
+      "단발",
+      "펌",
+      "볼륨"
+    ],
+    "length": "short",
+    "upkeep": "low"
+  },
+  {
+    "id": "w16",
+    "name": "Pixie Cut",
+    "nameKo": "픽시컷",
+    "description": "귀와 목선이 드러나는 짧은 컷. 이목구비가 또렷해 보이고 손질이 가장 간편하다.",
+    "gender": "female",
+    "category": "cut",
+    "imagePath": "/styles/w16-pixie-cut.png",
+    "tags": [
+      "숏컷",
+      "픽시",
+      "시크"
+    ],
+    "length": "short",
+    "upkeep": "low"
+  },
+  {
+    "id": "w17",
+    "name": "Stacked Bob",
+    "nameKo": "스택보브",
+    "description": "뒤통수는 짧게 쌓아 올리고 앞쪽은 길게 남긴 보브. 뒤통수 볼륨이 살아난다.",
+    "gender": "female",
+    "category": "cut",
+    "imagePath": "/styles/w17-stacked-bob.png",
+    "tags": [
+      "단발",
+      "보브",
+      "볼륨"
+    ],
+    "length": "short",
+    "upkeep": "medium"
+  },
+  {
+    "id": "w18",
+    "name": "Curtain Bangs",
+    "nameKo": "커튼뱅",
+    "description": "가운데를 갈라 양옆으로 흐르는 앞머리. 이마와 광대를 자연스럽게 덮어준다.",
+    "gender": "female",
+    "category": "cut",
+    "imagePath": "/styles/w18-curtain-bangs.png",
+    "tags": [
+      "앞머리",
+      "커튼뱅",
+      "페이스라인"
+    ],
+    "length": "medium",
+    "upkeep": "medium"
+  },
+  {
+    "id": "w19",
+    "name": "Long Layers",
+    "nameKo": "롱 레이어드",
+    "description": "긴 머리에 층을 넣어 무게를 덜어낸 컷. 길이는 지키면서 답답함을 없앤다.",
+    "gender": "female",
+    "category": "cut",
+    "imagePath": "/styles/w19-long-layers.png",
+    "tags": [
+      "긴머리",
+      "레이어드",
+      "내추럴"
+    ],
+    "length": "long",
+    "upkeep": "low"
+  },
+  {
     "id": "m1",
     "name": "Textured Crop",
     "nameKo": "텍스처 크롭",
@@ -348,7 +428,7 @@
       "앞머리",
       "내추럴"
     ],
-    "length": "medium",
+    "length": "short",
     "upkeep": "medium"
   },
   {
@@ -397,6 +477,38 @@
       "비즈니스"
     ],
     "length": "medium",
+    "upkeep": "low"
+  },
+  {
+    "id": "m12",
+    "name": "Down Perm",
+    "nameKo": "다운펌",
+    "description": "뜨는 옆머리와 뒷머리를 눌러주는 펌. 곱슬기와 부푼 볼륨을 가라앉힌다.",
+    "gender": "male",
+    "category": "perm",
+    "imagePath": "/styles/m12-down-perm.png",
+    "tags": [
+      "펌",
+      "볼륨다운",
+      "깔끔"
+    ],
+    "length": "medium",
+    "upkeep": "low"
+  },
+  {
+    "id": "m13",
+    "name": "Leaf Perm",
+    "nameKo": "리프펌",
+    "description": "짧은 윗머리에 나뭇잎 모양의 결을 넣은 펌. 사이드는 짧게 정리한다.",
+    "gender": "male",
+    "category": "perm",
+    "imagePath": "/styles/m13-leaf-perm.png",
+    "tags": [
+      "펌",
+      "숏",
+      "텍스처"
+    ],
+    "length": "short",
     "upkeep": "low"
   }
 ]

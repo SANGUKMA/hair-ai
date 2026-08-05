@@ -2,74 +2,48 @@ import { GoogleGenAI } from "@google/genai";
 import fs from "fs";
 import path from "path";
 
-const API_KEY = "AIzaSyC-B5t8PwC-MkSCCSsJsbwNAxXBNARekpc";
+const API_KEY = process.env.GEMINI_API_KEY;
+if (!API_KEY) {
+  console.error("GEMINI_API_KEY is not set.");
+  process.exit(1);
+}
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 const styles = [
   {
-    id: "w7",
-    file: "w7-short-layered.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "단발 레이어드컷" (Short Layered Cut) hairstyle. The hair should be a short bob with layered textures, falling just around the jawline with natural movement. The layers should frame the face beautifully. Natural dark brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. The model should look natural and confident. No text or watermarks.`,
+    id: "w15",
+    file: "w15-bob-perm.png",
+    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "단발펌" (Bob Perm) hairstyle. Jaw-to-chin length bob with soft, rounded curls throughout the mid-lengths and ends, giving the short cut body and movement. Not tight ringlets — soft, natural bounce. Natural dark brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
   },
   {
-    id: "w8",
-    file: "w8-tassel-cut.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "태슬컷" (Tassel Cut) hairstyle. The hair should have thin, wispy, see-through ends that look light and airy, with delicate tassel-like tips. Medium to long length. The bangs should also be thin and see-through. Natural dark brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
+    id: "w16",
+    file: "w16-pixie-cut.png",
+    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "픽시컷" (Pixie Cut) hairstyle. Very short crop with tapered nape and sides, ears and neckline exposed, slightly longer textured top with a wispy side-swept fringe. Chic and confident. Natural dark black hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
   },
   {
-    id: "w9",
-    file: "w9-volume-cut.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "볼륨커트" (Volume Cut) hairstyle. The hair should have abundant volume with bouncy layers, looking full and thick. Medium length with lots of body and movement. Natural dark brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
+    id: "w17",
+    file: "w17-stacked-bob.png",
+    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "스택보브" (Stacked / A-line Bob) hairstyle. Strongly graduated A-line bob: the back is cut clearly short and stacked high with rounded volume at the back of the head, while the two front sections angle steeply downward and are noticeably LONGER than the back, reaching past the jaw toward the collarbone. The difference in length between the short back and the long front pieces must be obvious even from the front. Sleek, sharp lines. Natural dark brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
   },
   {
-    id: "w10",
-    file: "w10-bob-cut.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "보브컷" (Bob Cut) hairstyle. Classic clean bob cut at jawline length, with a straight clean bottom line. Sleek and polished look. Natural dark black hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
+    id: "w18",
+    file: "w18-curtain-bangs.png",
+    prompt: `Generate a professional salon portfolio photo of a young Korean woman with "커튼뱅" (Curtain Bangs). She has a DISTINCT fringe, clearly much shorter than the rest of her hair: it is split down the middle and sweeps outward to both sides like open curtains, the shortest inner pieces landing at eyebrow level and lengthening out to the cheekbones. The fringe must be visibly separate from the shoulder-length hair behind it, partly covering the forehead on both sides. Natural dark brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
   },
   {
-    id: "w11",
-    file: "w11-layered-perm.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "레이어드펌" (Layered Perm) hairstyle. The hair should have layers with natural-looking waves/curls added through perm. Medium to long length with flowing, bouncy waves at different layers. Natural brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
+    id: "w19",
+    file: "w19-long-layers.png",
+    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "롱 레이어드" (Long Layers) hairstyle. Long hair well past the collarbone with soft graduated layers removing weight through the mid-lengths and ends, so the hair falls with movement instead of a heavy blunt line. No fringe. Natural dark brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
   },
   {
-    id: "w12",
-    file: "w12-elizabeth-perm.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "엘리자벳펌" (Elizabeth Perm) hairstyle. The hair should have big, elegant, glamorous curls reminiscent of classic Hollywood waves. Large voluminous S-shaped waves, luxurious and feminine. Medium to long length. Natural dark brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
+    id: "m12",
+    file: "m12-down-perm.png",
+    prompt: `Generate a professional salon portfolio photo of a young Korean man with a "다운펌" (Down Perm) hairstyle. The hair is NOT slicked or swept back — a soft natural fringe falls forward over the forehead. The point of the style is that the side hair above the ears and the back hair lie completely flat and pressed close to the skull instead of puffing out or flicking up, and the frizz is smoothed away. Medium-short length, neat and understated everyday look. Natural black hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
   },
   {
-    id: "w13",
-    file: "w13-jelly-perm.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "젤리펌" (Jelly Perm) hairstyle. The hair should have tight, bouncy, springy small curls throughout. The curls should look elastic and defined, giving a cute and youthful vibe. Medium length. Natural brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
-  },
-  {
-    id: "w14",
-    file: "w14-ballong-perm.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean woman with a "발롱펌" (Balloon Perm) hairstyle. The hair should have round, balloon-like volume with soft bouncy curls that puff out. The overall silhouette should be round and voluminous, making the face look smaller. Medium length. Natural dark brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
-  },
-  {
-    id: "m7",
-    file: "m7-gail-cut.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean man with a "가일컷" (Gail Cut) hairstyle. Short sides with a fade, longer textured top hair swept to one side. Clean and masculine look with sharp side part. Natural black hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
-  },
-  {
-    id: "m8",
-    file: "m8-seethrough-cut.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean man with a "시스루컷" (See-through Cut) hairstyle. Thin, wispy see-through bangs that show the forehead slightly. Short and neat overall with natural texture. Natural black hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
-  },
-  {
-    id: "m9",
-    file: "m9-gail-perm.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean man with a "가일펌" (Gail Perm) hairstyle. Short faded sides with wavy/permed textured top swept to one side. Combines the gail cut structure with soft waves on top. Natural black hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
-  },
-  {
-    id: "m10",
-    file: "m10-seethrough-perm.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean man with a "시스루펌" (See-through Perm) hairstyle. Thin see-through bangs with gentle waves/perm texture. Soft and natural-looking with slight waviness in the bangs and top. Natural dark brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
-  },
-  {
-    id: "m11",
-    file: "m11-garma-perm.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean man with a "가르마펌" (Garma/Part Perm) hairstyle. Center or side-parted hair with natural waves from perm. The part line is visible and the hair flows naturally to both sides with gentle S-wave curves. Clean and sophisticated business-casual look. Natural black hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
+    id: "m13",
+    file: "m13-leaf-perm.png",
+    prompt: `Generate a professional salon portfolio photo of a young Korean man with a "리프펌" (Leaf Perm) hairstyle. Short tapered sides with a short permed top where the strands separate into leaf-shaped pointed pieces falling toward the forehead. Light, airy texture, not heavy curls. Natural dark brown hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
   },
 ];
 
