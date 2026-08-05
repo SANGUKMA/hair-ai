@@ -340,14 +340,14 @@
     "id": "w17",
     "name": "Stacked Bob",
     "nameKo": "스택보브",
-    "description": "뒤통수는 짧게 쌓아 올리고 앞쪽은 길게 남긴 보브. 뒤통수 볼륨이 살아난다.",
+    "description": "앞쪽은 턱선 아래까지 길고 뒤로 갈수록 짧아지는 A라인 보브. 뒤통수는 층을 쌓아 올려 옆목이 드러난다. 앞뒤 길이가 같은 일자 보브와는 다르다.",
     "gender": "female",
     "category": "cut",
     "imagePath": "/styles/w17-stacked-bob.png",
     "tags": [
       "단발",
-      "보브",
-      "볼륨"
+      "A라인",
+      "뒤통수볼륨"
     ],
     "length": "short",
     "upkeep": "medium",

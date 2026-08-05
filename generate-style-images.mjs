@@ -33,7 +33,7 @@ const styles = [
   {
     id: "m18",
     file: "m18-blunt-fringe.png",
-    prompt: `Generate a professional salon portfolio photo of a young Korean man with a "일자뱅컷" (Blunt Fringe Cut) hairstyle. A thick, full fringe cut in one straight horizontal line just above the eyebrows, covering the whole forehead — not thinned or see-through. This is NOT a bowl cut: the sides are cut short and tapered close above the ears, the ears are visible, and the silhouette is flat and narrow at the sides rather than round. Modern and clean. Natural black hair color. Shot from front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
+    prompt: `Generate a professional salon portfolio photo of a young Korean man with a "일자뱅컷" (Blunt Fringe Cut) hairstyle. Thick straight fringe cut in one clean horizontal line just above the eyebrows. This is NOT a bowl cut and NOT a mushroom cut: the hair above the ears and around the back is clipped short and lies flat against the skull, the ears are fully exposed, and there is a clear visible step where the long top hair overhangs the short sides. Seen from the front the silhouette is flat and narrow at the temples, never a rounded dome. Natural black hair color. Front-facing angle, soft studio lighting, clean neutral background, high-resolution, photorealistic. No text or watermarks.`,
   },
   {
     id: "m19",
