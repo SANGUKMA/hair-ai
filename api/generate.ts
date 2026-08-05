@@ -756,10 +756,15 @@ Judge each of these from the photo. They decide as much as face shape does — a
 If the hair is tied back, heavily styled or partly out of frame, judge from what you can actually see rather than guessing.
 
 ## CATALOGUE (you may ONLY recommend ids from this list)
-${catalogue.map(s => `- ${s.id}: ${s.nameKo} (${s.category === 'cut' ? '컷' : '펌'}) — ${s.description} [length=${s.length}, upkeep=${s.upkeep}, ${s.tags.join(', ')}]`).join('\n')}
+${catalogue.map(s => `- ${s.id}: ${s.nameKo} (${s.category === 'cut' ? '컷' : '펌'}) — ${s.description} [length=${s.length}, upkeep=${s.upkeep}, suits=${s.faceShapes.join('/')}, ${s.tags.join(', ')}]`).join('\n')}
 
 "length" is how much hair the cut takes off, and "upkeep" is how much work it needs each
 morning. Use them literally when the client has told us something that depends on them.
+
+"suits" lists the face shapes the style is cut to flatter. Once you have read the client's
+face shape, treat it as a starting point, not a filter: a style listed for their shape needs
+no further defending, and one that is not may still be the right answer if their hair or their
+answers point there — say why in "reason" when you go against it.
 
 ## PERSONAL COLOUR
 Separately, diagnose which of the four personal colour seasons the client belongs to. Judge it from the UNDERTONE of their skin, and from how their skin, hair and eye colours sit against each other:

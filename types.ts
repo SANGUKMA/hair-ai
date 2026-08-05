@@ -26,6 +26,10 @@ export interface HairStyle {
   tags: string[];
   length: StyleLength;
   upkeep: StyleUpkeep;
+  // 이 스타일이 살려주는 얼굴형. length·upkeep과 달리 제약이 아니라 근거다 —
+  // 상담 답변은 고객이 말한 사실이지만 얼굴형은 어울림 판단이라, 후보를 잘라내면
+  // 흔치 않은 얼굴형에서 추천 세 개를 채우지 못한다.
+  faceShapes: FaceShape[];
 }
 
 export interface HairColor {

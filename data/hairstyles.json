@@ -13,7 +13,13 @@
       "내추럴"
     ],
     "length": "medium",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "round",
+      "square",
+      "diamond"
+    ]
   },
   {
     "id": "w2",
@@ -29,7 +35,12 @@
       "세련"
     ],
     "length": "short",
-    "upkeep": "medium"
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "long",
+      "heart"
+    ]
   },
   {
     "id": "w3",
@@ -45,7 +56,13 @@
       "청순"
     ],
     "length": "long",
-    "upkeep": "medium"
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "long",
+      "heart",
+      "round"
+    ]
   },
   {
     "id": "w4",
@@ -61,7 +78,12 @@
       "보헤미안"
     ],
     "length": "long",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "square",
+      "long"
+    ]
   },
   {
     "id": "w5",
@@ -77,7 +99,13 @@
       "트렌디"
     ],
     "length": "medium",
-    "upkeep": "medium"
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "square",
+      "diamond",
+      "round"
+    ]
   },
   {
     "id": "w6",
@@ -93,7 +121,12 @@
       "탄력"
     ],
     "length": "medium",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "round",
+      "square"
+    ]
   },
   {
     "id": "w7",
@@ -109,7 +142,12 @@
       "내추럴"
     ],
     "length": "short",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "square",
+      "diamond"
+    ]
   },
   {
     "id": "w8",
@@ -125,7 +163,12 @@
       "가벼운"
     ],
     "length": "medium",
-    "upkeep": "medium"
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "long",
+      "heart"
+    ]
   },
   {
     "id": "w9",
@@ -141,7 +184,12 @@
       "풍성"
     ],
     "length": "medium",
-    "upkeep": "high"
+    "upkeep": "high",
+    "faceShapes": [
+      "oval",
+      "long",
+      "square"
+    ]
   },
   {
     "id": "w10",
@@ -157,7 +205,11 @@
       "클래식"
     ],
     "length": "short",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "long"
+    ]
   },
   {
     "id": "w11",
@@ -173,7 +225,12 @@
       "웨이브"
     ],
     "length": "medium",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "square",
+      "diamond"
+    ]
   },
   {
     "id": "w12",
@@ -189,7 +246,12 @@
       "큰컬"
     ],
     "length": "long",
-    "upkeep": "medium"
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "long",
+      "square"
+    ]
   },
   {
     "id": "w13",
@@ -205,7 +267,12 @@
       "탄력"
     ],
     "length": "medium",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "long",
+      "heart"
+    ]
   },
   {
     "id": "w14",
@@ -221,7 +288,12 @@
       "둥근컬"
     ],
     "length": "medium",
-    "upkeep": "medium"
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "long",
+      "square"
+    ]
   },
   {
     "id": "w15",
@@ -237,7 +309,12 @@
       "볼륨"
     ],
     "length": "short",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "square",
+      "long"
+    ]
   },
   {
     "id": "w16",
@@ -253,7 +330,11 @@
       "시크"
     ],
     "length": "short",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "heart"
+    ]
   },
   {
     "id": "w17",
@@ -269,7 +350,12 @@
       "볼륨"
     ],
     "length": "short",
-    "upkeep": "medium"
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "round",
+      "square"
+    ]
   },
   {
     "id": "w18",
@@ -285,7 +371,14 @@
       "페이스라인"
     ],
     "length": "medium",
-    "upkeep": "medium"
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "heart",
+      "diamond",
+      "long",
+      "round"
+    ]
   },
   {
     "id": "w19",
@@ -301,7 +394,12 @@
       "내추럴"
     ],
     "length": "long",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "round",
+      "square"
+    ]
   },
   {
     "id": "m1",
@@ -317,7 +415,11 @@
       "모던"
     ],
     "length": "short",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "round"
+    ]
   },
   {
     "id": "m2",
@@ -333,7 +435,12 @@
       "깔끔"
     ],
     "length": "short",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "round",
+      "square"
+    ]
   },
   {
     "id": "m3",
@@ -349,7 +456,11 @@
       "정장"
     ],
     "length": "medium",
-    "upkeep": "medium"
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "round"
+    ]
   },
   {
     "id": "m4",
@@ -365,7 +476,12 @@
       "내추럴"
     ],
     "length": "medium",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "square",
+      "diamond"
+    ]
   },
   {
     "id": "m5",
@@ -381,7 +497,13 @@
       "K-pop"
     ],
     "length": "medium",
-    "upkeep": "high"
+    "upkeep": "high",
+    "faceShapes": [
+      "oval",
+      "long",
+      "heart",
+      "diamond"
+    ]
   },
   {
     "id": "m6",
@@ -397,7 +519,11 @@
       "클린"
     ],
     "length": "short",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "long"
+    ]
   },
   {
     "id": "m7",
@@ -413,7 +539,12 @@
       "남성미"
     ],
     "length": "short",
-    "upkeep": "medium"
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "round",
+      "square"
+    ]
   },
   {
     "id": "m8",
@@ -429,7 +560,12 @@
       "내추럴"
     ],
     "length": "short",
-    "upkeep": "medium"
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "long",
+      "heart"
+    ]
   },
   {
     "id": "m9",
@@ -445,7 +581,12 @@
       "웨이브"
     ],
     "length": "medium",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "round",
+      "square"
+    ]
   },
   {
     "id": "m10",
@@ -461,7 +602,13 @@
       "소프트"
     ],
     "length": "medium",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "long",
+      "heart",
+      "diamond"
+    ]
   },
   {
     "id": "m11",
@@ -477,7 +624,12 @@
       "비즈니스"
     ],
     "length": "medium",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "round",
+      "square"
+    ]
   },
   {
     "id": "m12",
@@ -493,7 +645,12 @@
       "깔끔"
     ],
     "length": "medium",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "round",
+      "diamond"
+    ]
   },
   {
     "id": "m13",
@@ -509,6 +666,137 @@
       "텍스처"
     ],
     "length": "short",
-    "upkeep": "low"
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "long",
+      "heart"
+    ]
+  },
+  {
+    "id": "m14",
+    "name": "Long Layered Cut",
+    "nameKo": "장발 레이어드",
+    "description": "어깨에 닿는 길이에 층을 넣어 흐르게 두는 컷. 얼굴선을 세로로 길게 잡아준다.",
+    "gender": "male",
+    "category": "cut",
+    "imagePath": "/styles/m14-long-layered.png",
+    "tags": [
+      "장발",
+      "레이어드",
+      "내추럴"
+    ],
+    "length": "long",
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "round",
+      "square"
+    ]
+  },
+  {
+    "id": "m15",
+    "name": "Long Wave Perm",
+    "nameKo": "웨이브 장발",
+    "description": "긴 길이에 느슨한 웨이브를 넣은 펌. 자유롭고 부드러운 분위기.",
+    "gender": "male",
+    "category": "perm",
+    "imagePath": "/styles/m15-long-wave-perm.png",
+    "tags": [
+      "장발",
+      "펌",
+      "웨이브"
+    ],
+    "length": "long",
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "square",
+      "diamond"
+    ]
+  },
+  {
+    "id": "m16",
+    "name": "Curly Perm",
+    "nameKo": "곱슬펌",
+    "description": "작고 탄력 있는 컬을 촘촘하게 넣은 펌. 볼륨이 확실하게 살아난다.",
+    "gender": "male",
+    "category": "perm",
+    "imagePath": "/styles/m16-curly-perm.png",
+    "tags": [
+      "펌",
+      "컬",
+      "볼륨"
+    ],
+    "length": "medium",
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "long",
+      "square"
+    ]
+  },
+  {
+    "id": "m17",
+    "name": "Wolf Cut",
+    "nameKo": "울프컷",
+    "description": "윗머리는 짧게 층을 내고 뒷머리는 길게 남긴 컷. 결이 살아 움직인다.",
+    "gender": "male",
+    "category": "cut",
+    "imagePath": "/styles/m17-wolf-cut.png",
+    "tags": [
+      "울프",
+      "레이어드",
+      "트렌디"
+    ],
+    "length": "medium",
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "long",
+      "diamond"
+    ]
+  },
+  {
+    "id": "m18",
+    "name": "Blunt Fringe Cut",
+    "nameKo": "일자뱅컷",
+    "description": "두께감 있는 앞머리를 눈썹 위로 일자로 내린 컷. 이마를 확실히 덮는다.",
+    "gender": "male",
+    "category": "cut",
+    "imagePath": "/styles/m18-blunt-fringe.png",
+    "tags": [
+      "앞머리",
+      "일자뱅",
+      "단정"
+    ],
+    "length": "short",
+    "upkeep": "low",
+    "faceShapes": [
+      "oval",
+      "long",
+      "heart"
+    ]
+  },
+  {
+    "id": "m19",
+    "name": "Slick Back",
+    "nameKo": "슬릭백",
+    "description": "앞머리까지 뒤로 넘겨 이마를 드러내는 스타일. 단정하고 성숙한 인상.",
+    "gender": "male",
+    "category": "cut",
+    "imagePath": "/styles/m19-slick-back.png",
+    "tags": [
+      "슬릭백",
+      "포마드",
+      "포멀"
+    ],
+    "length": "short",
+    "upkeep": "medium",
+    "faceShapes": [
+      "oval",
+      "round",
+      "square"
+    ]
   }
 ]
