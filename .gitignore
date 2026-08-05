@@ -30,3 +30,8 @@ member-codes.local*
 
 # 테스트하며 나온 결과 이미지
 test-*.png
+
+# 스킬 본체는 서드파티 코드라 이 저장소에 두지 않는다. 공개 저장소이기도 하고,
+# 무엇을 쓰는지는 skills-lock.json에 해시까지 남으므로 `npx skills add`로 다시 받으면 된다.
+.agents/
+.claude/
