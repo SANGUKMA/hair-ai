@@ -123,6 +123,9 @@ export interface ColorRecommendation {
 }
 
 export interface RecommendResult extends HairDiagnosis {
+  // 이 추천이 어느 성별 카탈로그에서 나왔는지. 원장님이 탭을 눌러 지정했으면 그 값이고,
+  // 지정하지 않았으면 서버가 사진에서 판별한 값이다. 화면의 성별 탭을 여기에 맞춘다.
+  gender: Gender;
   faceNote: string;      // 얼굴형/특징 요약 (한국어 한 문장)
   hairNote: string;      // 모발/두상 소견 (한국어 한 문장)
   recommendations: StyleRecommendation[];

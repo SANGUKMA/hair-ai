@@ -54,9 +54,11 @@ export const verifyAccessCode = async (code: string): Promise<void> => {
 };
 
 // 사진을 올리면 먼저 얼굴을 분석해 어울리는 스타일 세 가지를 추천받는다.
+// gender가 null이면 서버가 사진에서 판별하고, 판별한 값을 결과에 실어 보낸다.
+// 원장님이 성별 탭을 눌렀을 때만 값을 지정한다.
 export const recommendStyles = (
   userImage: string,
-  gender: Gender,
+  gender: Gender | null,
   consult?: ConsultAnswers
 ): Promise<RecommendResult> => postJson({ action: 'recommend', userImage, gender, consult });
 

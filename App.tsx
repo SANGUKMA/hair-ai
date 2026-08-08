@@ -76,15 +76,20 @@ const App: React.FC = () => {
   const [isRecommending, setIsRecommending] = useState(false);
   // 성별을 오갈 때 같은 사진으로 반복 호출하지 않도록 성별별 결과를 캐시한다.
   const recommendCache = useRef<Map<Gender, RecommendResult>>(new Map());
+  // 성별 탭을 연달아 누르면 요청이 겹친다. 늦게 도착한 옛 응답이 방금 받은 추천을
+  // 덮어쓰면 카드와 아래 그리드의 성별이 어긋난 채로 굳으므로, 마지막 요청만 반영한다.
+  const recommendSeq = useRef(0);
 
   const filtered = hairstyles.filter(s => s.gender === gender && s.category === styleCategory);
   const recommendedIds = new Set(recommendation?.recommendations.map(r => r.styleId));
   const recommendedColorIds = new Set(recommendation?.colorRecommendations?.map(r => r.colorId));
 
   // 상담 답변은 인자로 받는다. 클로저로 잡으면 방금 바꾼 답변 대신 이전 값이 나간다.
+  // target이 null이면 성별을 지정하지 않고 서버가 사진에서 판별하게 둔다.
   const requestRecommendation = useCallback(
-    async (image: string, target: Gender, answers: ConsultAnswers) => {
-    const cached = recommendCache.current.get(target);
+    async (image: string, target: Gender | null, answers: ConsultAnswers) => {
+    const seq = ++recommendSeq.current;
+    const cached = target ? recommendCache.current.get(target) : null;
     if (cached) {
       setRecommendation(cached);
       return;
@@ -93,8 +98,13 @@ const App: React.FC = () => {
     setRecommendation(null);
     try {
       const result = await recommendStyles(image, target, answers);
-      recommendCache.current.set(target, result);
+      if (seq !== recommendSeq.current) return;
+      recommendCache.current.set(result.gender, result);
       setRecommendation(result);
+      // 서버가 판별한 성별에 화면을 맞춘다. 같은 값이면 React가 알아서 넘어간다.
+      setGender(result.gender);
+      // 판별 결과가 지금 고른 스타일과 다른 성별이면 그 스타일은 그리드에서 사라진다.
+      setSelectedStyle(prev => (prev && prev.gender !== result.gender ? null : prev));
       setAppliedConsult(answers);
     } catch (err) {
       // 추천은 부가 기능이라 실패해도 스타일을 직접 고르면 된다. 화면을 막지 않는다.
@@ -102,7 +112,8 @@ const App: React.FC = () => {
       if (err instanceof AccessDeniedError) setIsUnlocked(false);
       console.error('추천 실패:', err);
     } finally {
-      setIsRecommending(false);
+      // 뒤늦게 끝난 옛 요청이 진행 중인 요청의 로딩 표시를 꺼버리면 안 된다.
+      if (seq === recommendSeq.current) setIsRecommending(false);
     }
     },
     []
@@ -114,7 +125,9 @@ const App: React.FC = () => {
     const base = await normalizePhoto(image);
     recommendCache.current.clear();
     setUserImage(base);
-    requestRecommendation(base, gender, consult);
+    // 성별을 지정하지 않고 부른다. 기본값으로 한 번 부르고 원장님이 탭을 눌러 다시
+    // 부르면 같은 사진으로 호출이 두 번 나가고, 남성 고객은 여성 추천을 먼저 본다.
+    requestRecommendation(base, null, consult);
   };
 
   const handleGenderChange = (next: Gender) => {

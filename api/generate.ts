@@ -7,6 +7,7 @@ import type {
   CrownVolume,
   FaceShape,
   FringeAdjustment,
+  Gender,
   StyleAdjustments,
   HairColor,
   HairDensity,
@@ -160,6 +161,9 @@ const oneOf =
     typeof v === 'string' && (values as readonly string[]).includes(v);
 
 const isFaceShape = oneOf(FACE_SHAPES);
+
+const GENDERS = ['female', 'male'] as const;
+const isGender = oneOf(GENDERS);
 
 const PERSONAL_COLORS = ['spring-warm', 'summer-cool', 'autumn-warm', 'winter-cool'] as const;
 const isPersonalColor = oneOf(PERSONAL_COLORS);
@@ -653,6 +657,7 @@ export const verifyIdentity = async (
 const RECOMMEND_SCHEMA = {
   type: Type.OBJECT,
   properties: {
+    gender: { type: Type.STRING, enum: [...GENDERS] },
     faceShape: { type: Type.STRING, enum: [...FACE_SHAPES] },
     faceNote: {
       type: Type.STRING,
@@ -716,6 +721,7 @@ const RECOMMEND_SCHEMA = {
     },
   },
   required: [
+    'gender',
     'faceShape',
     'faceNote',
     'hairThickness',
@@ -738,15 +744,43 @@ const PERSONAL_COLOR_RUBRIC = `- spring-warm (봄 웜): warm golden undertone, l
 - autumn-warm (가을 웜): warm golden undertone, deep and muted colouring, rich and earthy
 - winter-cool (겨울 쿨): cool blue undertone, clear and deep colouring, strong contrast`;
 
+const styleLine = (s: HairStyle) =>
+  `- ${s.id}: ${s.nameKo} (${s.category === 'cut' ? '컷' : '펌'}) — ${s.description} [length=${s.length}, upkeep=${s.upkeep}, suits=${s.faceShapes.join('/')}, ${s.tags.join(', ')}]`;
+
+// 성별을 지정받지 않았을 때는 카탈로그를 양쪽 다 보여주고 모델이 사진에서 고르게 한다.
+// 기본값으로 한 번 부르고 원장님이 탭을 눌러 다시 부르면 호출이 두 번 나가고,
+// 첫 결과가 늦게 도착하면 맞는 추천을 덮어쓴다.
+const buildCatalogueSection = (catalogue: HairStyle[], requested: Gender | null) => {
+  if (requested) return catalogue.map(styleLine).join('\n');
+  const half = (g: Gender) => catalogue.filter(s => s.gender === g).map(styleLine).join('\n');
+  return `### FEMALE STYLES
+${half('female')}
+
+### MALE STYLES
+${half('male')}`;
+};
+
+const GENDER_INSTRUCTION = `## WHICH HALF OF THE CATALOGUE
+The catalogue below is split in two because the two halves are cut differently. Decide from the
+photo which half this client is looking at, answer it in "gender", and then recommend ONLY ids
+from that half — never mix the two. Judge it from the whole picture in front of you, and when
+the photo genuinely leaves it open, go with the way the hair is currently cut.
+
+This decision only chooses a catalogue. Do NOT mention the client's gender anywhere in the
+Korean text, and do not let it stand in for reading their face and hair.
+
+`;
+
 const buildRecommendPrompt = (
   catalogue: HairStyle[],
   colorCatalogue: HairColor[],
-  consult: ConsultAnswers
+  consult: ConsultAnswers,
+  requested: Gender | null
 ) => `You are an experienced Korean salon director recommending haircuts and hair colour.
 
 Look at the client's photo and work out their face shape, features and overall vibe, then read the hair itself. Only after both do you pick the THREE styles from the catalogue below that would genuinely suit them best.
 
-## THE CLIENT'S HAIR
+${requested ? '' : GENDER_INSTRUCTION}## THE CLIENT'S HAIR
 Judge each of these from the photo. They decide as much as face shape does — a cut that lives on body and movement will fall flat on fine, sparse hair no matter how well it suits the face.
 - hairThickness — how thick one single strand is (fine / medium / thick)
 - hairDensity — how much hair there is overall (sparse / medium / dense)
@@ -756,7 +790,7 @@ Judge each of these from the photo. They decide as much as face shape does — a
 If the hair is tied back, heavily styled or partly out of frame, judge from what you can actually see rather than guessing.
 
 ## CATALOGUE (you may ONLY recommend ids from this list)
-${catalogue.map(s => `- ${s.id}: ${s.nameKo} (${s.category === 'cut' ? '컷' : '펌'}) — ${s.description} [length=${s.length}, upkeep=${s.upkeep}, suits=${s.faceShapes.join('/')}, ${s.tags.join(', ')}]`).join('\n')}
+${buildCatalogueSection(catalogue, requested)}
 
 "length" is how much hair the cut takes off, and "upkeep" is how much work it needs each
 morning. Use them literally when the client has told us something that depends on them.
@@ -827,7 +861,10 @@ const handleRecommend = async (
   gender: unknown,
   rawConsult: unknown
 ) => {
-  const catalogue = styles.filter(s => s.gender === (gender === 'male' ? 'male' : 'female'));
+  // 성별은 원장님이 탭을 눌러 직접 지정했을 때만 온다. 사진을 막 올린 참이면 값이 없고,
+  // 그때는 모델이 사진에서 판별한다. 판별 결과는 응답에 실어 보내 화면의 탭을 맞춘다.
+  const requested: Gender | null = isGender(gender) ? gender : null;
+  const catalogue = requested ? styles.filter(s => s.gender === requested) : styles;
   // 'natural'은 "염색 안함"이라 추천 대상이 아니다.
   const colorCatalogue = colors.filter(c => c.id !== 'natural');
 
@@ -850,7 +887,7 @@ const handleRecommend = async (
         role: 'user',
         parts: [
           { inlineData: { mimeType: userImage[1], data: userImage[2] } },
-          { text: buildRecommendPrompt(catalogue, colorCatalogue, consult) },
+          { text: buildRecommendPrompt(catalogue, colorCatalogue, consult, requested) },
         ],
       },
     ],
@@ -862,11 +899,26 @@ const handleRecommend = async (
 
   const parsed = JSON.parse(response.text || '{}');
 
-  const recommendations = pickValidIds(
-    parsed.recommendations,
-    'styleId',
-    new Set(catalogue.map(s => s.id))
-  );
+  const pickFor = (g: Gender) =>
+    pickValidIds(
+      parsed.recommendations,
+      'styleId',
+      new Set(styles.filter(s => s.gender === g).map(s => s.id))
+    );
+
+  let resolved: Gender = requested ?? (isGender(parsed.gender) ? parsed.gender : 'female');
+  let recommendations = pickFor(resolved);
+
+  // 판별 모드에서는 모델이 답한 성별과 실제로 고른 스타일이 어긋날 수 있다. 그때는
+  // 고른 쪽을 따른다 — 화면의 성별 탭 하나보다 추천 세 개가 비는 쪽이 더 나쁘다.
+  if (!recommendations.length && !requested) {
+    const other: Gender = resolved === 'male' ? 'female' : 'male';
+    const fallback = pickFor(other);
+    if (fallback.length) {
+      resolved = other;
+      recommendations = fallback;
+    }
+  }
 
   if (!recommendations.length) {
     console.error('Recommendation returned no usable style ids:', response.text);
@@ -884,6 +936,7 @@ const handleRecommend = async (
   const note = (v: unknown) => (typeof v === 'string' ? v : '');
 
   sendJson(res, 200, {
+    gender: resolved,
     faceShape: isFaceShape(parsed.faceShape) ? parsed.faceShape : null,
     faceNote: note(parsed.faceNote),
     hairThickness: isHairThickness(parsed.hairThickness) ? parsed.hairThickness : null,
